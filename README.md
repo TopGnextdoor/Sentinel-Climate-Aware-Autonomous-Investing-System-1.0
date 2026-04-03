@@ -64,7 +64,7 @@ Displays the live agent execution trace: Climate → Financial → Simulation �
 
 <img width="1919" height="970" alt="Screenshot 2026-04-03 185133" src="https://github.com/user-attachments/assets/00e0a9e5-3502-452f-9004-899324355669" />
 
-<img width="1919" height="970" alt="Screenshot 2026-04-03 185133" src="https://github.com/user-attachments/assets/98bb7beb-1149-4bc2-9faf-4fb2158c2397" />
+<img width="1919" height="966" alt="Screenshot 2026-04-03 185150" src="https://github.com/user-attachments/assets/8ac57fa6-4631-487a-a1eb-bfb7f4830621" />
 
 ---
 
