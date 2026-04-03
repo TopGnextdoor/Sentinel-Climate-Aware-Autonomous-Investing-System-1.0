@@ -127,6 +127,8 @@ def execute_trade_endpoint(request: ExecuteTradeRequest) -> Dict[str, Any]:
         logger.error(f"Error executing trade: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+from app.services.insights_engine import generate_insights_data
+
 @router.post("/explain")
 def explain(request: ExplainRequest) -> Dict[str, str]:
     """Provide a mocked pipeline state dictionary to receive an overarching string explanation."""
@@ -137,3 +139,89 @@ def explain(request: ExplainRequest) -> Dict[str, str]:
     except Exception as e:
         logger.error(f"Error generating explanation: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/insights")
+def get_insights(request: PortfolioRequest) -> Dict[str, Any]:
+    """Fetch rich dynamic HTML dashboard data for ESG insights."""
+    try:
+        logger.info("Generating dynamic ESG insights for dashboard")
+        return generate_insights_data(request.portfolio)
+    except Exception as e:
+        logger.error(f"Error generating insights: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  MARKET DATA — Real OHLCV via yfinance
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/market-data/{ticker}")
+def get_market_data(
+    ticker: str,
+    period: str = "1y",
+    interval: str = "1wk"
+) -> Dict[str, Any]:
+    """
+    Fetch real OHLCV candlestick data for the front-end trading chart.
+
+    Query params:
+      period   — 1d | 5d | 1mo | 3mo | 6mo | 1y | 2y | 5y | max
+      interval — 1m | 2m | 5m | 15m | 30m | 60m | 90m | 1h | 1d | 5d | 1wk | 1mo | 3mo
+
+    Returns { ticker, period, interval, candles: [{time, open, high, low, close, volume}], info }
+    """
+    try:
+        import yfinance as yf
+
+        ticker = ticker.upper().strip()
+        logger.info(f"Fetching real market data via yfinance: {ticker} period={period} interval={interval}")
+
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period=period, interval=interval)
+
+        if hist.empty:
+            raise HTTPException(status_code=404, detail=f"No data found for ticker '{ticker}'")
+
+        candles = []
+        for ts, row in hist.iterrows():
+            # Convert pandas Timestamp to Unix epoch (seconds) for Lightweight Charts
+            unix_time = int(ts.timestamp())
+            candles.append({
+                "time":   unix_time,
+                "open":   round(float(row["Open"]),   2),
+                "high":   round(float(row["High"]),   2),
+                "low":    round(float(row["Low"]),    2),
+                "close":  round(float(row["Close"]),  2),
+                "volume": int(row["Volume"]),
+            })
+
+        # Get current info for the stats bar (best-effort)
+        info = {}
+        try:
+            raw = stock.fast_info
+            info = {
+                "regularMarketPrice":      round(float(raw.get("lastPrice", 0) or 0),        2),
+                "regularMarketOpen":       round(float(raw.get("open", 0) or 0),              2),
+                "regularMarketDayHigh":    round(float(raw.get("dayHigh", 0) or 0),          2),
+                "regularMarketDayLow":     round(float(raw.get("dayLow", 0) or 0),           2),
+                "fiftyTwoWeekHigh":        round(float(raw.get("yearHigh", 0) or 0),         2),
+                "fiftyTwoWeekLow":         round(float(raw.get("yearLow", 0) or 0),          2),
+                "regularMarketVolume":     int(raw.get("lastVolume", 0) or 0),
+                "shortName":               ticker,
+            }
+        except Exception as e:
+            logger.warning(f"Could not fetch fast_info for {ticker}: {e}")
+
+        return {
+            "ticker":   ticker,
+            "period":   period,
+            "interval": interval,
+            "candles":  candles,
+            "info":     info,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching real market data for {ticker}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch market data from yfinance: {str(e)}")

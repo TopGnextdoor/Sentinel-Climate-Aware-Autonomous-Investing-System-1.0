@@ -22,6 +22,7 @@ def calculate_allocation(budget: float, eligible_assets: List[Dict[str, Any]], s
         if shares > 0:
             holdings.append({
                 "ticker": ticker,
+                "price": round(price, 2),
                 "shares": shares,
                 "weight": round(weight, 4),
                 "allocated_value": round(shares * price, 2)

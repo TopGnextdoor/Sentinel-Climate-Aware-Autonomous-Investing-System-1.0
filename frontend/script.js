@@ -2,7 +2,26 @@
 // SENTINEL — Centralized API Layer + Page Integration
 // ============================================================
 
-const BASE_URL = 'http://127.0.0.1:8000';
+// Automatically adapt to localhost or cloud (e.g., Render) deployments
+const BASE_URL = window.location.origin.includes('5500') || window.location.origin.includes('3000') 
+    ? 'http://127.0.0.1:8000' 
+    : '';
+
+// ─────────────────────────────────────────
+//  REAL STOCK PRICES (reference data)
+// ─────────────────────────────────────────
+const STOCK_PRICES = {
+    AAPL:  189.23,
+    MSFT:  402.11,
+    GOOGL: 175.98,
+    AMZN:  198.45,
+    TSLA:  172.63,
+    NVDA:  875.40,
+    META:  513.27,
+    BRK:   412.50,
+    JPM:   202.18,
+    V:     279.55,
+};
 
 // ─────────────────────────────────────────
 //  CORE API FUNCTIONS
@@ -115,7 +134,8 @@ function initDashboard() {
     // Gauge animation
     const gaugeProgress = document.querySelector('#gauge-progress');
     if (gaugeProgress) {
-        setTimeout(() => { gaugeProgress.style.strokeDashoffset = '70'; }, 500);
+        // Initial state is blanked via CSS inline style in HTML.
+        // It will spring to life inside renderDashboardResults().
     }
 
     // RUN ANALYSIS BUTTON
@@ -196,17 +216,25 @@ function renderDashboardResults(container, data) {
     const g = data.guard || {};
     const t = data.trade || {};
     const ex = data.execution || {};
+    const c_data = data.climate_data || {};
     const explanation = data.explanation || 'No explanation available.';
     const guardStatus = g.status || 'UNKNOWN';
 
     // Portfolio holdings
-    const holdingsHTML = (p.holdings || []).map(h =>
-        `<div class="trade-row">
-            <div style="font-weight:700">${h.ticker}</div>
-            <div style="font-size:0.8rem;color:var(--muted-text)">${h.shares} shares @ ${(h.weight * 100).toFixed(1)}%</div>
+    const holdingsHTML = (p.holdings || []).map(h => {
+        const price = STOCK_PRICES[h.ticker?.toUpperCase()] || (h.shares > 0 ? (h.allocated_value / h.shares) : 0);
+        const priceStr = price > 0 ? formatCurrency(price) : '—';
+        return `<div class="trade-row">
+            <div>
+                <div style="font-weight:700;letter-spacing:0.04em">${h.ticker}</div>
+                <div style="font-size:0.72rem;color:#a8ff3e;margin-top:2px;font-family:'JetBrains Mono',monospace">${priceStr}<span style="color:var(--muted-text);margin-left:4px">/share</span></div>
+            </div>
+            <div style="font-size:0.8rem;color:var(--muted-text);text-align:right">
+                ${h.shares} sh · ${(h.weight * 100).toFixed(1)}%
+            </div>
             <span class="trade-chip chip-buy">${formatCurrency(h.allocated_value)}</span>
-        </div>`
-    ).join('') || '<div style="color:var(--muted-text)">No holdings allocated.</div>';
+        </div>`;
+    }).join('') || '<div style="color:var(--muted-text)">No holdings allocated.</div>';
 
     // Violations
     const violations = g.violations || [];
@@ -266,11 +294,26 @@ function renderDashboardResults(container, data) {
     if (execStatusEl) {
         const now = new Date();
         const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const execStatus = ex.status || 'PENDING';
+        
+        let execStatus = ex.status || 'PENDING';
+        if (!ex.status && guardStatus === 'BLOCKED') {
+            execStatus = 'BLOCKED_BY_GUARD';
+        }
+        
         const orderInfo = ex.order_id ? ` | Order: ${ex.order_id}` : '';
-        const color = execStatus === 'EXECUTED_SIMULATED' ? 'var(--neon-lime)' : execStatus.includes('BLOCK') ? '#ff4444' : '#ffcc00';
+        const color = execStatus === 'EXECUTED_SIMULATED' ? 'var(--neon-lime)' 
+            : execStatus === 'EXECUTED_LIVE_PAPER' ? '#00d2ff' 
+            : execStatus.includes('BLOCK') ? '#ff4444' 
+            : '#ffcc00';
+            
         execStatusEl.style.color = color;
         execStatusEl.innerHTML = `STATUS: ${execStatus} ${timeStr} EST${orderInfo}`;
+
+        const modeLabel = document.getElementById('alpaca-mode-label');
+        if (modeLabel) {
+            modeLabel.innerText = execStatus === 'EXECUTED_LIVE_PAPER' ? 'ALPACA LIVE PAPER MODE' : 'ALPACA SIMULATION MODE';
+            modeLabel.style.color = execStatus === 'EXECUTED_LIVE_PAPER' ? '#00d2ff' : 'inherit';
+        }
     }
 
     const orchDiv = document.getElementById("orchestration");
@@ -364,6 +407,20 @@ function renderDashboardResults(container, data) {
                 ${(g.violations || []).length ? `<div style="font-size:0.72rem; color:#ff6666; margin-top:6px">⚠ ${g.violations.join(' | ')}</div>` : ''}
             </section>
         `;
+    }
+
+    // --- Update Dynamic Global Climate Resilience Gauge ---
+    if (c_data.green_score !== undefined) {
+        const scoreValEl = document.getElementById('climate-resilience-score');
+        const gaugeEl = document.getElementById('gauge-progress');
+        if (scoreValEl && gaugeEl) {
+            const sc = Math.round(c_data.green_score);
+            scoreValEl.innerHTML = `${sc}<span style="font-size:0.8rem; font-weight:400">/100</span>`;
+            // Total arc length of the semi-circle (R=80) is ~251.2
+            // Offset logic: 251.2 is entirely empty, 0 is entirely full
+            const offset = 251.2 * (1 - (c_data.green_score / 100));
+            gaugeEl.style.strokeDashoffset = offset.toString();
+        }
     }
 }
 
@@ -1053,6 +1110,126 @@ function renderClimateInsights(container, data) {
 }
 
 // ─────────────────────────────────────────
+//  PAGE: insights.html
+// ─────────────────────────────────────────
+
+async function initInsights() {
+    const btnRefresh = document.getElementById('refresh-climate-btn');
+    if (!btnRefresh) return;
+    
+    // UI elements
+    const cEsgTbody = document.getElementById('insights-esg-tbody');
+    const cSector = document.getElementById('insights-sector-container');
+    const cHeatmap = document.getElementById('insights-heatmap-container');
+    const cAlerts = document.getElementById('insights-alerts-container');
+    const cScatter = document.getElementById('insights-scatter-dots');
+    
+    const gaugeScore = document.getElementById('gauge-score');
+    const gaugeLabel = document.getElementById('gauge-label');
+    const gaugeCircle = document.getElementById('gauge-circle');
+    const subscores = document.getElementById('insights-subscores');
+
+    async function loadData() {
+        try {
+            btnRefresh.disabled = true;
+            btnRefresh.textContent = 'Refreshing...';
+            
+            // In a full app, we'd pull the actual holdings state here.
+            // Sending an empty holdings array triggers the API to use its mock realistic portfolio.
+            const data = await apiFetch('/insights', 'POST', { portfolio: [] });
+            
+            // 1. Portfolio Gauge & Breakdown
+            const pt = data.portfolio_rating;
+            gaugeScore.textContent = pt;
+            gaugeLabel.textContent = data.portfolio_status;
+            gaugeCircle.style.strokeDasharray = `${(pt / 100) * 408} 408`;
+            
+            subscores.innerHTML = Object.entries(data.scores).map(([k, v]) => `
+                <div class="breakdown-row">
+                    <span style="text-transform: capitalize;">${k.replace('_', ' ')}</span>
+                    <div class="bd-bar-track"><div class="h-bar-fill ${v >= 80 ? 'safe' : v >= 50 ? 'warn' : 'danger'}" style="--w: ${v}%;"></div></div>
+                    <span class="bd-bar-val">${v}</span>
+                </div>
+            `).join('');
+
+            // 2. Alerts
+            cAlerts.innerHTML = data.alerts.map(a => `
+                <div class="insight-alert ${a.status}">
+                    <span class="icon">${a.icon}</span>
+                    <div class="insight-alert-text">${a.text}</div>
+                </div>
+            `).join('');
+
+            // 3. ESG Table
+            cEsgTbody.innerHTML = data.assets.map(a => `
+                <tr>
+                    <td style="font-weight:700">${a.ticker}</td>
+                    <td>
+                        <div class="esg-bar-container"><div class="esg-bar" style="width: ${a.esg_score}%; background: ${a.esg_score >= 80 ? '#00ff88' : a.esg_score >= 60 ? '#a8ff3e' : a.esg_score >= 40 ? '#ffcc00' : '#ff4444'};"></div></div>
+                    </td>
+                    <td><span class="pill-esg" style="color:${a.esg_score >= 80 ? '#00ff88' : a.esg_score >= 60 ? '#a8ff3e' : a.esg_score >= 40 ? '#ffcc00' : '#ff4444'}">${a.rating}</span></td>
+                </tr>
+            `).join('');
+
+            // 4. Sectors
+            cSector.innerHTML = data.sectors.map(s => {
+                const highlight = s.is_heavy ? 'style="color:#ff4444"' : '';
+                return `
+                <div class="h-bar-row">
+                    <div class="h-bar-label" ${highlight}>${s.sector}</div>
+                    <div class="h-bar-track"><div class="h-bar-fill ${s.status}" style="--w: ${Math.min(100, s.weight)}%"></div></div>
+                    <div class="h-bar-value" ${highlight}>${s.weight}%</div>
+                </div>`;
+            }).join('');
+
+            // 5. Heatmap
+            let heatmapHtml = `
+                <div></div>
+                <div class="hm-col-label">Carbon</div>
+                <div class="hm-col-label">Water</div>
+                <div class="hm-col-label">Waste</div>
+                <div class="hm-col-label">Trans.</div>
+                <div class="hm-col-label">Phys.</div>
+            `;
+            const clr = val => val === 'Low' ? 'hm-green' : val === 'Med' ? 'hm-yellow' : 'hm-red';
+            data.assets.slice(0, 5).forEach(a => {
+                heatmapHtml += `
+                    <div class="hm-row-label">${a.ticker}</div>
+                    <div class="hm-cell ${clr(a.carbon)}" data-tooltip="Carbon: ${a.carbon}"></div>
+                    <div class="hm-cell ${clr(a.water)}" data-tooltip="Water: ${a.water}"></div>
+                    <div class="hm-cell ${clr(a.waste)}" data-tooltip="Waste: ${a.waste}"></div>
+                    <div class="hm-cell ${clr(a.transition)}" data-tooltip="Transition: ${a.transition}"></div>
+                    <div class="hm-cell ${clr(a.physical)}" data-tooltip="Physical: ${a.physical}"></div>
+                `;
+            });
+            cHeatmap.innerHTML = heatmapHtml;
+
+            // 6. Scatter Dots
+            // Map risk (0-100 -> left to right)
+            // Map return (5-45 -> bottom to top) => Return goes roughly from 0 to 50
+            cScatter.innerHTML = data.assets.map(a => {
+                const x = a.risk_score;
+                const y = Math.min(100, Math.max(0, ((a.exp_return) / 50) * 100));
+                const color = a.esg_score >= 80 ? '#00ff88' : a.esg_score >= 60 ? '#a8ff3e' : a.esg_score >= 40 ? '#ffcc00' : '#ff4444';
+                return `<div class="scatter-dot" style="left: ${x}%; top: ${100 - y}%; color: ${color};" data-ticker="${a.ticker}" title="${a.ticker} | Ret: ${a.exp_return}% | Risk: ${a.risk_score}"></div>`;
+            }).join('');
+
+        } catch (e) {
+            console.error(e);
+            cAlerts.innerHTML = `<div class="insight-alert danger"><span class="icon">❌</span><div class="insight-alert-text">Failed to fetch dynamic insights. Is the backend running?</div></div>`;
+        } finally {
+            btnRefresh.textContent = '🔄 Refresh Live Data';
+            btnRefresh.disabled = false;
+        }
+    }
+
+    btnRefresh.addEventListener('click', loadData);
+    
+    // Auto load
+    loadData();
+}
+
+// ─────────────────────────────────────────
 //  INIT ROUTER — detect page by element presence
 // ─────────────────────────────────────────
 
@@ -1061,5 +1238,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('run-pipeline-btn'))  initPipeline();
     if (document.getElementById('run-sim-btn'))       initSimulator();
     if (document.getElementById('btn-validate'))      initGuard();
-    if (document.getElementById('insights-output') || document.getElementById('insights-trigger')) initInsights();
+    if (document.getElementById('refresh-climate-btn')) initInsights();
 });

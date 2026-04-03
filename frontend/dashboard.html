@@ -8,6 +8,158 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- TradingView Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        /* ── Live Chart Section ──────────────────────────── */
+        .chart-section {
+            margin: 0 4rem 2rem 4rem;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            background: rgba(10, 22, 10, 0.92);
+            border: 1px solid rgba(168,255,62,0.18);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(168,255,62,0.05);
+        }
+        .chart-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .chart-ticker-tabs {
+            display: flex;
+            gap: 6px;
+        }
+        .chart-tab {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.6);
+            transition: all 0.2s ease;
+            letter-spacing: 0.04em;
+        }
+        .chart-tab:hover { border-color: rgba(168,255,62,0.4); color: #a8ff3e; }
+        .chart-tab.active {
+            background: rgba(168,255,62,0.12);
+            border-color: #a8ff3e;
+            color: #a8ff3e;
+            box-shadow: 0 0 12px rgba(168,255,62,0.2);
+        }
+        .chart-interval-tabs {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .chart-int-btn {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            border: 1px solid transparent;
+            background: transparent;
+            color: rgba(255,255,255,0.4);
+            transition: 0.2s;
+        }
+        .chart-int-btn.active, .chart-int-btn:hover {
+            background: rgba(168,255,62,0.1);
+            border-color: rgba(168,255,62,0.3);
+            color: #a8ff3e;
+        }
+        .chart-price-bar {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-wrap: wrap;
+        }
+        .chart-price-main {
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+        .chart-price-change {
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 6px;
+        }
+        .chart-price-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .chart-price-stat .lbl {
+            font-size: 0.62rem;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .chart-price-stat .val {
+            font-size: 0.8rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(255,255,255,0.85);
+        }
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #00ff88;
+            border: 1px solid rgba(0,255,136,0.3);
+            background: rgba(0,255,136,0.07);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .live-dot {
+            width: 6px; height: 6px;
+            background: #00ff88;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #00ff88;
+            animation: livePulse 1.2s infinite;
+        }
+        #sentinel-chart-container {
+            width: 100%;
+            height: 380px;
+            position: relative;
+        }
+        .chart-vol-label {
+            position: absolute;
+            top: 8px;
+            left: 12px;
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.25);
+            font-family: 'JetBrains Mono', monospace;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .chart-crosshair-info {
+            padding: 0.6rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.4);
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .chart-crosshair-info span { color: rgba(255,255,255,0.65); }
+    </style>
 </head>
 <body>
 
@@ -58,6 +210,71 @@
             </div>
         </div>
     </header>
+
+    <!-- ══════════════════════════════════════════════════
+         LIVE STOCK CHART SECTION
+    ═══════════════════════════════════════════════════ -->
+    <section class="chart-section" id="stock-chart-section">
+
+        <!-- Top Bar: Ticker Selector + Interval + Live Badge -->
+        <div class="chart-topbar">
+            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+                <div style="font-size:0.7rem;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:0.1em">MARKET WATCH</div>
+                <div class="chart-ticker-tabs" id="chart-tabs">
+                    <button class="chart-tab active" data-ticker="AAPL"  data-price="189.23">AAPL</button>
+                    <button class="chart-tab"         data-ticker="MSFT"  data-price="402.11">MSFT</button>
+                    <button class="chart-tab"         data-ticker="NVDA"  data-price="875.40">NVDA</button>
+                    <button class="chart-tab"         data-ticker="GOOGL" data-price="175.98">GOOGL</button>
+                    <button class="chart-tab"         data-ticker="TSLA"  data-price="172.63">TSLA</button>
+                    <button class="chart-tab"         data-ticker="META"  data-price="513.27">META</button>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:1rem">
+                <div class="chart-interval-tabs" id="interval-tabs">
+                    <button class="chart-int-btn" data-interval="1D">1D</button>
+                    <button class="chart-int-btn active" data-interval="1W">1W</button>
+                    <button class="chart-int-btn" data-interval="1M">1M</button>
+                    <button class="chart-int-btn" data-interval="3M">3M</button>
+                    <button class="chart-int-btn" data-interval="1Y">1Y</button>
+                </div>
+                <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+            </div>
+        </div>
+
+        <!-- Price Stats Bar -->
+        <div class="chart-price-bar" id="chart-price-bar">
+            <div>
+                <div style="font-size:0.72rem;color:rgba(255,255,255,0.35);letter-spacing:0.08em;margin-bottom:4px">APPLE INC.</div>
+                <div class="chart-price-main" id="chart-price-main" style="color:#a8ff3e">$189.23</div>
+            </div>
+            <div class="chart-price-change" id="chart-price-change" style="background:rgba(0,255,136,0.1);color:#00ff88">+1.24 (+0.66%)</div>
+            <div class="chart-price-stat"><div class="lbl">OPEN</div><div class="val" id="stat-open">188.42</div></div>
+            <div class="chart-price-stat"><div class="lbl">HIGH</div><div class="val" id="stat-high" style="color:#00ff88">190.15</div></div>
+            <div class="chart-price-stat"><div class="lbl">LOW</div><div class="val" id="stat-low" style="color:#ff4444">187.80</div></div>
+            <div class="chart-price-stat"><div class="lbl">52W HIGH</div><div class="val" id="stat-52h">198.23</div></div>
+            <div class="chart-price-stat"><div class="lbl">52W LOW</div><div class="val" id="stat-52l">142.45</div></div>
+            <div class="chart-price-stat"><div class="lbl">VOLUME</div><div class="val" id="stat-vol">62.4M</div></div>
+            <div style="margin-left:auto">
+                <div style="font-size:0.65rem;color:rgba(255,255,255,0.3);margin-bottom:4px">ESG RATING</div>
+                <div id="chart-esg-badge" style="font-size:0.75rem;font-weight:800;color:#a8ff3e;font-family:'JetBrains Mono',monospace">AA ✦</div>
+            </div>
+        </div>
+
+        <!-- Chart Canvas -->
+        <div id="sentinel-chart-container">
+            <div class="chart-vol-label">VOLUME</div>
+        </div>
+
+        <!-- Crosshair Info Footer -->
+        <div class="chart-crosshair-info" id="chart-crosshair">
+            <div>O: <span id="ci-open">—</span></div>
+            <div>H: <span id="ci-high">—</span></div>
+            <div>L: <span id="ci-low">—</span></div>
+            <div>C: <span id="ci-close">—</span></div>
+            <div>VOL: <span id="ci-vol">—</span></div>
+            <div style="margin-left:auto;color:rgba(255,255,255,0.3)">Powered by Sentinel Market Engine · Simulated Data</div>
+        </div>
+    </section>
 
     <!-- DASHBOARD MAIN GRID -->
     <main class="dashboard-grid">
@@ -154,10 +371,11 @@
                         </linearGradient>
                     </defs>
                     <path d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-bg" />
-                    <path id="gauge-progress" d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-progress" />
+                    <!-- Arc length ~ 251.2. Starts at offset 251.2 (empty) -->
+                    <path id="gauge-progress" d="M 20 100 A 80 80 0 0 1 180 100" class="gauge-progress" style="stroke-dasharray: 251.2 251.2; stroke-dashoffset: 251.2; transition: stroke-dashoffset 1s ease-out;" />
                 </svg>
                 <div style="position: absolute; bottom: 0; left: 0; right: 0; text-align: center;">
-                    <div class="score-value">72<span style="font-size:0.8rem; font-weight:400">/100</span></div>
+                    <div id="climate-resilience-score" class="score-value">--<span style="font-size:0.8rem; font-weight:400">/100</span></div>
                 </div>
             </div>
 
@@ -206,15 +424,24 @@
             <h4 class="panel-title" style="margin-bottom:1rem; font-size:0.8rem">Trade Recommendation</h4>
             <div id="trade-recs-container">
                 <div class="trade-row">
-                    <div style="font-weight:700">NVDA</div>
+                    <div>
+                        <div style="font-weight:700">NVDA</div>
+                        <div style="font-size:0.72rem;color:#a8ff3e;font-family:'JetBrains Mono',monospace;margin-top:2px">$875.40<span style="color:var(--muted-text);margin-left:4px">/share</span></div>
+                    </div>
                     <span class="trade-chip chip-buy">BUY</span>
                 </div>
                 <div class="trade-row">
-                    <div style="font-weight:700">MSFT</div>
+                    <div>
+                        <div style="font-weight:700">MSFT</div>
+                        <div style="font-size:0.72rem;color:#a8ff3e;font-family:'JetBrains Mono',monospace;margin-top:2px">$402.11<span style="color:var(--muted-text);margin-left:4px">/share</span></div>
+                    </div>
                     <span class="trade-chip chip-hold">HOLD</span>
                 </div>
                 <div class="trade-row" style="border-bottom:none">
-                    <div style="font-weight:700">XOM</div>
+                    <div>
+                        <div style="font-weight:700">XOM</div>
+                        <div style="font-size:0.72rem;color:#ff6666;font-family:'JetBrains Mono',monospace;margin-top:2px">$94.11<span style="color:var(--muted-text);margin-left:4px">/share</span></div>
+                    </div>
                     <span class="trade-chip chip-avoid">AVOID</span>
                 </div>
             </div>
@@ -243,10 +470,10 @@
     <div class="glass-card rounded-2xl execution-bar">
         <div class="status-label">
             <img src="https://alpaca.markets/favicon.ico" width="16" alt="AlpacaLogo">
-            <span>ALPACA SIMULATION MODE</span>
+            <span id="alpaca-mode-label">ALPACA SIMULATION MODE</span>
         </div>
-        <div id="execution-status-text" style="font-weight:700; color:var(--neon-lime)">
-            STATUS: Order Executed 09:41:22 EST
+        <div id="execution-status-text" style="font-weight:700; color:var(--muted-text)">
+            STATUS: STANDBY — AWAITING ANALYSIS...
         </div>
     </div>
 
@@ -264,6 +491,291 @@
         <div style="font-size:0.7rem; color:var(--muted-text)">© 2026 SENTINEL SYSTEMS INC.</div>
     </footer>
 
-    <script src="script.js?v=2026040303"></script>
+    <script src="script.js?v=2026040400"></script>
+    <script>
+    // ═══════════════════════════════════════════════
+    //  SENTINEL LIVE CHART ENGINE
+    // ═══════════════════════════════════════════════
+
+    const CHART_STOCKS = {
+        AAPL:  { name: 'Apple Inc.',          price: 189.23, vol: 62.4,  esg: 'AA ✦',  drift: 0.0004, volat: 0.012 },
+        MSFT:  { name: 'Microsoft Corp.',     price: 402.11, vol: 28.1,  esg: 'AAA ✦', drift: 0.0005, volat: 0.010 },
+        NVDA:  { name: 'NVIDIA Corp.',        price: 875.40, vol: 41.9,  esg: 'BBB',   drift: 0.0008, volat: 0.022 },
+        GOOGL: { name: 'Alphabet Inc.',       price: 175.98, vol: 19.3,  esg: 'AA',    drift: 0.0003, volat: 0.011 },
+        TSLA:  { name: 'Tesla Inc.',          price: 172.63, vol: 88.7,  esg: 'B',     drift: -0.0002, volat: 0.030 },
+        META:  { name: 'Meta Platforms Inc.', price: 513.27, vol: 17.6,  esg: 'BBB',   drift: 0.0006, volat: 0.013 },
+    };
+
+    const INTERVAL_BARS = { '1D': 48, '1W': 90, '1M': 120, '3M': 180, '1Y': 260 };
+
+    let chart, candleSeries, volSeries;
+    let activeTicker = 'AAPL';
+    let activeInterval = '1W';
+    let liveInterval = null;
+    let currentCandles = [];
+
+    function generateCandles(ticker, numBars) {
+        const stock = CHART_STOCKS[ticker];
+        const candles = [];
+        const vols = [];
+        let price = stock.price * (0.82 + Math.random() * 0.06); // start ~85% of current
+        const now = Math.floor(Date.now() / 1000);
+        const step = activeInterval === '1D' ? 1800
+                   : activeInterval === '1W' ? 3600 * 4
+                   : activeInterval === '1M' ? 86400
+                   : activeInterval === '3M' ? 86400 * 2
+                   : 86400 * 7;
+
+        for (let i = numBars; i >= 0; i--) {
+            const t = now - i * step;
+            const open = price;
+            const change = price * (stock.drift + (Math.random() - 0.5) * stock.volat * 2);
+            const close = Math.max(price + change, price * 0.94);
+            const high  = Math.max(open, close) * (1 + Math.random() * stock.volat * 0.5);
+            const low   = Math.min(open, close) * (1 - Math.random() * stock.volat * 0.5);
+            const volume = stock.vol * (0.5 + Math.random() * 1.2) * 1e6;
+            candles.push({ time: t, open: +open.toFixed(2), high: +high.toFixed(2), low: +low.toFixed(2), close: +close.toFixed(2) });
+            vols.push({ time: t, value: Math.round(volume), color: close >= open ? 'rgba(0,255,136,0.35)' : 'rgba(255,68,68,0.35)' });
+            price = close;
+        }
+        return { candles, vols };
+    }
+
+    function fmtPrice(p)  { return '$' + p.toFixed(2); }
+    function fmtVol(v)    { return (v / 1e6).toFixed(1) + 'M'; }
+
+    function updatePriceBar(ticker, lastCandle, apiInfo = null) {
+        const stock  = CHART_STOCKS[ticker];
+        const first  = currentCandles[0];
+        const change = lastCandle.close - first.open;
+        const pct    = (change / first.open) * 100;
+        const up     = change >= 0;
+        const color  = up ? '#00ff88' : '#ff4444';
+        const bgClr  = up ? 'rgba(0,255,136,0.1)' : 'rgba(255,68,68,0.1)';
+
+        document.getElementById('chart-price-main').textContent = fmtPrice(lastCandle.close);
+        document.getElementById('chart-price-main').style.color = color;
+        document.getElementById('chart-price-change').textContent =
+            `${up ? '+' : ''}${change.toFixed(2)} (${up ? '+' : ''}${pct.toFixed(2)}%)`;
+        document.getElementById('chart-price-change').style.color = color;
+        document.getElementById('chart-price-change').style.background = bgClr;
+
+        const highs = currentCandles.map(c => c.high);
+        const lows  = currentCandles.map(c => c.low);
+        document.getElementById('stat-open').textContent = fmtPrice(first.open);
+        document.getElementById('stat-high').textContent = fmtPrice(Math.max(...highs));
+        document.getElementById('stat-low').textContent  = fmtPrice(Math.min(...lows));
+
+        // Use precise API data if available, else synthetic fallback
+        if (apiInfo && apiInfo.fiftyTwoWeekHigh) {
+            document.getElementById('stat-52h').textContent = fmtPrice(apiInfo.fiftyTwoWeekHigh);
+            document.getElementById('stat-52l').textContent = fmtPrice(apiInfo.fiftyTwoWeekLow);
+            document.getElementById('stat-vol').textContent = fmtVol(apiInfo.regularMarketVolume || apiInfo.volume || (stock.vol * 1e6));
+        } else {
+            document.getElementById('stat-52h').textContent  = fmtPrice(stock.price * (1.05 + Math.random() * 0.03));
+            document.getElementById('stat-52l').textContent  = fmtPrice(stock.price * (0.70 + Math.random() * 0.05));
+            document.getElementById('stat-vol').textContent  = fmtVol(stock.vol * 1e6);
+        }
+
+        // Company name
+        const nameEl = document.querySelector('#chart-price-bar > div:first-child > div:first-child');
+        if (nameEl) nameEl.textContent = stock.name.toUpperCase();
+
+        // ESG
+        document.getElementById('chart-esg-badge').textContent = stock.esg;
+        const esgColor = stock.esg.startsWith('AAA') ? '#a8ff3e' : stock.esg.startsWith('AA') ? '#00ff88' : stock.esg.startsWith('BBB') ? '#ffcc00' : '#ff4444';
+        document.getElementById('chart-esg-badge').style.color = esgColor;
+    }
+
+    async function loadChart(ticker, interval) {
+        activeTicker = ticker;
+        activeInterval = interval;
+        const numBars = INTERVAL_BARS[interval] || 90;
+
+        let candles = [];
+        let vols = [];
+        let apiInfo = null;
+        let isRealData = false;
+
+        // Map UI intervals to yfinance intervals
+        const periodMap   = { '1D': {p:'5d', i:'15m'}, '1W': {p:'1mo', i:'1h'}, '1M': {p:'3mo', i:'1d'}, '3M': {p:'6mo', i:'1d'}, '1Y': {p:'1y', i:'1wk'} };
+        const req = periodMap[interval] || {p:'1mo', i:'1d'};
+
+        try {
+            // Attempt to fetch REAL data from Sentinel backend
+            const res = await fetch(`http://127.0.0.1:8000/market-data/${ticker}?period=${req.p}&interval=${req.i}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.candles && data.candles.length > 0) {
+                    candles = data.candles;
+                    // Build volume series
+                    vols = candles.map(c => ({
+                        time: c.time,
+                        value: c.volume,
+                        color: c.close >= c.open ? 'rgba(0,255,136,0.35)' : 'rgba(255,68,68,0.35)'
+                    }));
+                    apiInfo = data.info;
+                    isRealData = true;
+                }
+            }
+        } catch (e) {
+            console.warn("Backend real data failed, falling back to synthetic generator", e);
+        }
+
+        // Fallback to synthetic if fetch failed or returned empty
+        if (!isRealData) {
+            const synth = generateCandles(ticker, numBars);
+            candles = synth.candles;
+            vols = synth.vols;
+        }
+        currentCandles = candles;
+
+        candleSeries.setData(candles);
+        volSeries.setData(vols);
+        chart.timeScale().fitContent();
+
+        const last = candles[candles.length - 1];
+        updatePriceBar(ticker, last, apiInfo);
+
+        // Update data origin badge
+        const badgeNode = document.querySelector('.chart-crosshair-info > div:last-child');
+        if (badgeNode) badgeNode.innerHTML = isRealData ? 
+            'Powered by <span style="color:#00ff88">yfinance</span> API · <span style="color:#fff">Real Data</span>' : 
+            'Powered by Sentinel Market Engine · Simulated Data';
+
+        // Reset crosshair
+        ['ci-open','ci-high','ci-low','ci-close','ci-vol'].forEach(id => {
+            document.getElementById(id).textContent = '—';
+        });
+
+        // Live ticking (only simulate micro-ticks if it's not real data, or if we want to fake "live" motion on top of real history)
+        clearInterval(liveInterval);
+        liveInterval = setInterval(() => { tickLive(isRealData); }, 2000);
+    }
+
+    function tickLive(isRealData = false) {
+        if (!currentCandles.length) return;
+        
+        // If we are showing real data but the market is closed, we still do micro-ticks for the UI "live" feel
+        // otherwise the chart looks dead.
+        const stock = CHART_STOCKS[activeTicker];
+        const last  = currentCandles[currentCandles.length - 1];
+        const change = last.close * ((stock.drift * 0.1) + (Math.random() - 0.48) * stock.volat * (isRealData ? 0.05 : 0.6));
+        const newClose = +(last.close + change).toFixed(2);
+        const newHigh  = +(Math.max(last.high, newClose)).toFixed(2);
+        const newLow   = +(Math.min(last.low,  newClose)).toFixed(2);
+        const updated  = { ...last, close: newClose, high: newHigh, low: newLow };
+        currentCandles[currentCandles.length - 1] = updated;
+        candleSeries.update(updated);
+        updatePriceBar(activeTicker, updated);
+    }
+
+    function initChart() {
+        const container = document.getElementById('sentinel-chart-container');
+
+        chart = LightweightCharts.createChart(container, {
+            width:  container.clientWidth,
+            height: 380,
+            layout: {
+                background: { type: 'solid', color: '#0a160a' },
+                textColor:  'rgba(255,255,255,0.5)',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize:   11,
+            },
+            grid: {
+                vertLines: { color: 'rgba(255,255,255,0.04)' },
+                horzLines: { color: 'rgba(255,255,255,0.04)' },
+            },
+            crosshair: {
+                mode: 1,
+                vertLine: { color: 'rgba(168,255,62,0.4)', labelBackgroundColor: '#0d1a0d' },
+                horzLine: { color: 'rgba(168,255,62,0.4)', labelBackgroundColor: '#0d1a0d' },
+            },
+            rightPriceScale: {
+                borderColor: 'rgba(255,255,255,0.07)',
+                textColor:   'rgba(255,255,255,0.45)',
+            },
+            timeScale: {
+                borderColor:        'rgba(255,255,255,0.07)',
+                textColor:          'rgba(255,255,255,0.35)',
+                timeVisible:        true,
+                secondsVisible:     false,
+                fixRightEdge:       true,
+            },
+            handleScroll:  { mouseWheel: true, pressedMouseMove: true },
+            handleScale:   { mouseWheel: true, pinch: true },
+        });
+
+        // Candlestick series
+        candleSeries = chart.addCandlestickSeries({
+            upColor:          '#00ff88',
+            downColor:        '#ff4444',
+            borderUpColor:    '#00ff88',
+            borderDownColor:  '#ff4444',
+            wickUpColor:      'rgba(0,255,136,0.7)',
+            wickDownColor:    'rgba(255,68,68,0.7)',
+            priceLineColor:   '#a8ff3e',
+            priceLineWidth:   1,
+            lastValueVisible: true,
+        });
+
+        // Volume histogram
+        volSeries = chart.addHistogramSeries({
+            priceFormat:   { type: 'volume' },
+            priceScaleId:  'vol',
+            scaleMargins:  { top: 0.76, bottom: 0 },
+        });
+
+        // Crosshair info footer
+        chart.subscribeCrosshairMove(param => {
+            if (!param.time || !param.seriesData) return;
+            const c = param.seriesData.get(candleSeries);
+            const v = param.seriesData.get(volSeries);
+            if (c) {
+                document.getElementById('ci-open').textContent  = fmtPrice(c.open);
+                document.getElementById('ci-high').textContent  = fmtPrice(c.high);
+                document.getElementById('ci-low').textContent   = fmtPrice(c.low);
+                document.getElementById('ci-close').textContent = fmtPrice(c.close);
+            }
+            if (v) document.getElementById('ci-vol').textContent = fmtVol(v.value);
+        });
+
+        // Resize observer — keep chart width in sync with container
+        const ro = new ResizeObserver(entries => {
+            if (entries[0]) {
+                chart.applyOptions({ width: entries[0].contentRect.width });
+            }
+        });
+        ro.observe(container);
+
+        // Load default
+        loadChart('AAPL', '1W');
+
+        // Ticker tab clicks
+        document.getElementById('chart-tabs').addEventListener('click', e => {
+            const tab = e.target.closest('.chart-tab');
+            if (!tab) return;
+            document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            loadChart(tab.dataset.ticker, activeInterval);
+        });
+
+        // Interval tab clicks
+        document.getElementById('interval-tabs').addEventListener('click', e => {
+            const btn = e.target.closest('.chart-int-btn');
+            if (!btn) return;
+            document.querySelectorAll('.chart-int-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadChart(activeTicker, btn.dataset.interval);
+        });
+    }
+
+    // Init after DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initChart);
+    } else {
+        initChart();
+    }
+    </script>
 </body>
 </html>

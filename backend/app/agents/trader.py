@@ -4,13 +4,12 @@ import random
 
 def generate_trade_proposals(allowed_assets: list, max_trade: float) -> Dict[str, Any]:
     """Agent for generating actual paper trades (Pre-Guard Intent Generation)."""
-    # Meta data mapping to test Guard Rules dynamically
     ticker_meta = {
-        "AAPL": {"sector": "technology", "risk_score": 30, "price": 175.50},
-        "MSFT": {"sector": "technology", "risk_score": 25, "price": 405.10},
-        "TSLA": {"sector": "auto", "risk_score": 60, "price": 180.20},
-        "XOM": {"sector": "fossils", "risk_score": 85, "price": 105.30},
-        "NEE": {"sector": "renewables", "risk_score": 20, "price": 70.00}
+        "AAPL": {"sector": "technology", "risk_score": 30},
+        "MSFT": {"sector": "technology", "risk_score": 25},
+        "TSLA": {"sector": "auto", "risk_score": 60},
+        "XOM": {"sector": "fossils", "risk_score": 85},
+        "NEE": {"sector": "renewables", "risk_score": 20}
     }
     
     if not allowed_assets:
@@ -19,10 +18,13 @@ def generate_trade_proposals(allowed_assets: list, max_trade: float) -> Dict[str
         
     target_ticker = random.choice(allowed_assets)
     # Ensure meta fallback if ticker randomly selected isn't in test meta map
-    meta = ticker_meta.get(target_ticker, {"sector": "unknown", "risk_score": 50, "price": 150.0})
+    meta = ticker_meta.get(target_ticker, {"sector": "unknown", "risk_score": 50})
     
     # Calculate a valid quantity based on max_trade budget context
-    price = meta["price"]
+    # Need to fetch live price!
+    from app.services.market_data import get_stock_price
+    price = get_stock_price(target_ticker)
+    
     affordable_qty = max(1, int((max_trade * 0.5) / price)) 
     quantity = min(affordable_qty, 200) # cap at 200 shares
     
@@ -34,7 +36,8 @@ def generate_trade_proposals(allowed_assets: list, max_trade: float) -> Dict[str
             "action": "buy", 
             "quantity": quantity,
             "sector": meta["sector"],
-            "risk_score": meta["risk_score"]
+            "risk_score": meta["risk_score"],
+            "price": round(price, 2)
         }, 
         "estimated_cost": round(estimated_cost, 2)
     }
