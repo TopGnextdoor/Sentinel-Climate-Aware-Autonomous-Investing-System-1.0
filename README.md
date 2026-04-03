@@ -430,7 +430,4 @@ All stock prices and ESG data are pulled live from Yahoo Finance (yfinance) — 
 
 ---
 
-
----
-
 > *"Every investment decision should be intelligent, transparent, and safe — for people and the planet."*
