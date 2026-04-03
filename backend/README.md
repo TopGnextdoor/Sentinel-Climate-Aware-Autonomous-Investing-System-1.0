@@ -44,7 +44,7 @@ DEBUG=true
 CORS_ORIGINS=http://localhost:5500,http://127.0.0.1:5500
 ```
 
-> **Note:** Alpaca keys are optional. The system runs in simulation mode without them.
+> **Note:** We havent implimented this yet
 
 ### 4. Start the Backend
 
