@@ -1,0 +1,5 @@
+[
+  { "ticker": "AAPL", "climate_score": 85.0, "risk_level": "Low" },
+  { "ticker": "MSFT", "climate_score": 90.5, "risk_level": "Low" },
+  { "ticker": "TSLA", "climate_score": 75.0, "risk_level": "Medium" }
+]

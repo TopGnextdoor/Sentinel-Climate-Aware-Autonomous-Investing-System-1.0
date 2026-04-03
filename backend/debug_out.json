@@ -1,0 +1,124 @@
+{
+    "portfolio": {
+        "total_budget": 100000.0,
+        "invested_amount": 99838.6,
+        "cash_balance": 161.4,
+        "holdings": [
+            {
+                "ticker": "AAPL",
+                "shares": 193,
+                "weight": 0.3393,
+                "allocated_value": 33871.5
+            },
+            {
+                "ticker": "MSFT",
+                "shares": 89,
+                "weight": 0.3613,
+                "allocated_value": 36053.9
+            },
+            {
+                "ticker": "TSLA",
+                "shares": 166,
+                "weight": 0.2994,
+                "allocated_value": 29913.2
+            }
+        ]
+    },
+    "climate_scores": {
+        "green_score": 83.5,
+        "avoided_sectors_applied": [],
+        "eligible_assets": [
+            {
+                "ticker": "AAPL",
+                "sector": "Technology",
+                "climate_score": 85.0,
+                "risk_level": "Low"
+            },
+            {
+                "ticker": "MSFT",
+                "sector": "Technology",
+                "climate_score": 90.5,
+                "risk_level": "Low"
+            },
+            {
+                "ticker": "TSLA",
+                "sector": "Automotive",
+                "climate_score": 75.0,
+                "risk_level": "Medium"
+            }
+        ]
+    },
+    "simulation": {
+        "scenario": "Standard 1-Year Market Drift",
+        "expected_1y_value": 106847.01,
+        "estimated_return_pct": 6.85,
+        "value_at_risk_95": 13500.8,
+        "drawdown_probability": 0.2421
+    },
+    "trade": {
+        "proposed_trade": {
+            "ticker": "XOM",
+            "action": "buy",
+            "quantity": 150,
+            "sector": "fossil",
+            "risk_score": 60
+        },
+        "estimated_cost": 15000.0
+    },
+    "guard": {
+        "status": "APPROVED",
+        "decision": "Trade approved.",
+        "violations": [],
+        "modifications": [],
+        "original_trade": {
+            "ticker": "XOM",
+            "action": "buy",
+            "quantity": 150,
+            "sector": "fossil",
+            "risk_score": 60
+        },
+        "adjusted_trade": null
+    },
+    "execution": {
+        "status": "EXECUTED_SIMULATED",
+        "order_id": "mock_alpaca_f2b6c6fe",
+        "symbol": "XOM",
+        "qty": 150,
+        "message": "Simulated execution for buy 150 shares of XOM."
+    },
+    "explanation": "Portfolio allocation was dynamically weighted by ESG metrics, achieving an average climate score of 83.5/100. The proposed trade was APPROVED because it passed all fiscal limits and rigorously respected the sector restrictions. Prior to mock-execution, a Monte Carlo simulation validated the risk, forecasting a 24.2% probability of severe drawdown, matching your risk tolerance boundary.",
+    "orchestration": [
+        {
+            "agent": "climate",
+            "status": "completed"
+        },
+        {
+            "agent": "financial",
+            "status": "completed"
+        },
+        {
+            "agent": "simulation",
+            "status": "completed"
+        },
+        {
+            "agent": "portfolio",
+            "status": "completed"
+        },
+        {
+            "agent": "trade",
+            "status": "completed"
+        },
+        {
+            "agent": "guard",
+            "status": "completed"
+        },
+        {
+            "agent": "trader",
+            "status": "completed"
+        },
+        {
+            "agent": "explain",
+            "status": "completed"
+        }
+    ]
+}
