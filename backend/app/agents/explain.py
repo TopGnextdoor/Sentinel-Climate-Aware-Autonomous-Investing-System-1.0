@@ -17,29 +17,35 @@ def generate_explanation(pipeline_state: Dict[str, Any]) -> str:
         violations = guard.get('violations', [])
         drawdown = sim.get('drawdown_probability', 0)
         
+        trade_obj = guard.get("original_trade", {})
+        ticker = trade_obj.get("ticker", "asset")
+        action = str(trade_obj.get("action", "trade")).upper()
+        
         # 1. Portfolio Selection & Climate Impact
         explanation = (
-            f"Portfolio allocation was dynamically weighted by ESG metrics, achieving an average climate score of {green_score}/100. "
+            "EXECUTING CLIMATE-AWARE REBALANCING...<br>"
+            f"> [PORTFOLIO CONTEXT] Allocation dynamically weighted by ESG metrics, achieving an average climate score of {green_score}/100.<br>"
+            f"> [TRADE INTENT] System proposed to {action} {ticker}.<br>"
         )
         
         # 2. Trade Intent Enforcement
         if guard_status == "APPROVED":
-            explanation += "The proposed trade was APPROVED because it passed all fiscal limits and rigorously respected the sector restrictions. "
+            explanation += f"> [WHY THIS DECISION?] The {ticker} trade was APPROVED as it passed all fiscal limits and rigorously respected sector restrictions. 🛡️ Safe-Guard verified compliance."
         elif guard_status == "MODIFIED":
             mods = " ".join(modifications) if modifications else "scaling down the quantity to fit allocation limits."
-            explanation += f"The proposed trade was MODIFIED: {mods} "
+            explanation += f"> [SAFE-GUARD INTERVENTION] The {ticker} trade was MODIFIED: {mods} ⚠️ Limits enforced dynamically."
         elif guard_status == "BLOCKED":
             issues = " ".join(violations) if violations else "intent policy violations."
-            explanation += f"The proposed trade was STRICTLY BLOCKED to protect user intent. Reason: {issues} "
+            explanation += f"> [SAFE-GUARD INTERVENTION] The {ticker} trade was STRICTLY BLOCKED to protect user intent. Reason: {issues} 🚫"
             
         # 3. Simulation Impact
         if guard_status in ["APPROVED", "MODIFIED"] and "expected_1y_value" in sim:
             explanation += (
-                f"Prior to mock-execution, a Monte Carlo simulation validated the risk, forecasting a "
-                f"{drawdown*100:.1f}% probability of severe drawdown, matching your risk tolerance boundary."
+                f"<br>> [SIMULATION] A Monte Carlo test validated the risk, forecasting a "
+                f"{drawdown*100:.1f}% probability of severe drawdown, matching your tolerance."
             )
         elif guard_status == "BLOCKED":
-            explanation += "Forward simulation and market execution were cleanly bypassed to safely enforce the policy block."
+            explanation += "<br>> [SIMULATION] Forward simulation and market execution were cleanly bypassed to safely enforce the policy block."
             
         return explanation.strip()
         

@@ -48,12 +48,19 @@
             }
         ]
     },
+    "financial_data": {
+        "market_sentiment": "volatile",
+        "recommended_risk": "high",
+        "expected_return": 0.1233,
+        "volatility": 0.18,
+        "market_risk_score": 18.0
+    },
     "simulation": {
         "scenario": "Standard 1-Year Market Drift",
-        "expected_1y_value": 106847.01,
-        "estimated_return_pct": 6.85,
-        "value_at_risk_95": 13500.8,
-        "drawdown_probability": 0.2421
+        "expected_1y_value": 108420.43,
+        "estimated_return_pct": 8.42,
+        "value_at_risk_95": 8558.21,
+        "drawdown_probability": 0.1855
     },
     "trade": {
         "proposed_trade": {
@@ -81,12 +88,12 @@
     },
     "execution": {
         "status": "EXECUTED_SIMULATED",
-        "order_id": "mock_alpaca_f2b6c6fe",
+        "order_id": "mock_alpaca_fcacd0c0",
         "symbol": "XOM",
         "qty": 150,
         "message": "Simulated execution for buy 150 shares of XOM."
     },
-    "explanation": "Portfolio allocation was dynamically weighted by ESG metrics, achieving an average climate score of 83.5/100. The proposed trade was APPROVED because it passed all fiscal limits and rigorously respected the sector restrictions. Prior to mock-execution, a Monte Carlo simulation validated the risk, forecasting a 24.2% probability of severe drawdown, matching your risk tolerance boundary.",
+    "explanation": "Portfolio allocation was dynamically weighted by ESG metrics, achieving an average climate score of 83.5/100. The proposed trade was APPROVED because it passed all fiscal limits and rigorously respected the sector restrictions. Prior to mock-execution, a Monte Carlo simulation validated the risk, forecasting a 18.6% probability of severe drawdown, matching your risk tolerance boundary.",
     "orchestration": [
         {
             "agent": "climate",

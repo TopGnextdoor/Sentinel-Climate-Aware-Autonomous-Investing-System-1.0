@@ -496,6 +496,18 @@ input[type=range]::-webkit-slider-thumb {
     animation: pulseGlow 2s infinite;
 }
 
+.status-blocked {
+    color: #ff4444;
+    border-color: rgba(255, 68, 68, 0.3);
+    animation: pulseGlow 2s infinite;
+}
+
+.status-modified {
+    color: #ffcc00;
+    border-color: rgba(255, 204, 0, 0.3);
+    animation: pulseGlow 2s infinite;
+}
+
 .status-text {
     font-size: 1.25rem;
     font-weight: 800;

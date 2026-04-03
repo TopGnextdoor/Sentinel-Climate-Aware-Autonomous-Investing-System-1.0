@@ -179,22 +179,22 @@
     <div id="orchestration" class="glass-card rounded-2xl" style="display:none;margin:0 4rem 2rem 4rem;padding:1.5rem;"></div>
 
     <!-- LOWER GRID (3 COLS) -->
-    <div class="lower-grid">
+    <div id="lower-grid-container" class="lower-grid">
         
         <!-- Risk Metrics -->
         <section class="glass-card rounded-2xl sub-card">
             <h4 class="panel-title" style="margin-bottom:1rem; font-size:0.8rem">Risk Analysis</h4>
             <div class="metric-row">
                 <div style="font-size:0.85rem">Volatility (30D)</div>
-                <div style="font-size:1.1rem; font-weight:700">12.4%</div>
+                <div id="risk-volatility" style="font-size:1.1rem; font-weight:700">12.4%</div>
             </div>
             <div class="volatility-bar">
-                <div class="bar-fill" style="width:40%"></div>
+                <div id="risk-volatility-bar" class="bar-fill" style="width:40%"></div>
             </div>
 
             <div class="metric-row" style="margin-top:1.5rem">
                 <div style="font-size:0.85rem">Max Drawdown</div>
-                <div style="color:#ff4444; font-weight:700">-3.2%</div>
+                <div id="risk-drawdown" style="color:#ff4444; font-weight:700">-3.2%</div>
             </div>
             <svg class="sparkline-svg">
                 <polyline points="0,30 20,25 40,35 60,15 80,38 100,28 120,32 140,40 160,20 180,35 200,25 220,30 240,10" fill="none" stroke="#a8ff3e" stroke-width="2" />
@@ -204,26 +204,28 @@
         <!-- Trade Insights -->
         <section class="glass-card rounded-2xl sub-card">
             <h4 class="panel-title" style="margin-bottom:1rem; font-size:0.8rem">Trade Recommendation</h4>
-            <div class="trade-row">
-                <div style="font-weight:700">NVDA</div>
-                <span class="trade-chip chip-buy">BUY</span>
-            </div>
-            <div class="trade-row">
-                <div style="font-weight:700">MSFT</div>
-                <span class="trade-chip chip-hold">HOLD</span>
-            </div>
-            <div class="trade-row" style="border-bottom:none">
-                <div style="font-weight:700">XOM</div>
-                <span class="trade-chip chip-avoid">AVOID</span>
+            <div id="trade-recs-container">
+                <div class="trade-row">
+                    <div style="font-weight:700">NVDA</div>
+                    <span class="trade-chip chip-buy">BUY</span>
+                </div>
+                <div class="trade-row">
+                    <div style="font-weight:700">MSFT</div>
+                    <span class="trade-chip chip-hold">HOLD</span>
+                </div>
+                <div class="trade-row" style="border-bottom:none">
+                    <div style="font-weight:700">XOM</div>
+                    <span class="trade-chip chip-avoid">AVOID</span>
+                </div>
             </div>
         </section>
 
         <!-- Guard Result -->
-        <section class="glass-card rounded-2xl sub-card guard-status status-approved">
+        <section id="guard-result-card" class="glass-card rounded-2xl sub-card guard-status status-approved">
             <h4 class="panel-title" style="margin-bottom:1rem; font-size:0.8rem; color:inherit">Sentinel Guard Rails</h4>
-            <div style="font-size:3rem">🛡️</div>
-            <div class="status-text">APPROVED</div>
-            <p style="font-size:0.75rem; margin-top:8px">Portfolio modification checks passed.</p>
+            <div id="guard-icon" style="font-size:3rem">🛡️</div>
+            <div id="guard-status-text" class="status-text">APPROVED</div>
+            <p id="guard-desc-text" style="font-size:0.75rem; margin-top:8px">Portfolio modification checks passed.</p>
         </section>
 
     </div>
@@ -231,7 +233,7 @@
     <!-- EXPLANATION PANEL -->
     <div class="glass-card rounded-2xl explanation-panel">
         <label class="label">AI DECISION SUMMARY</label>
-        <div class="explanation-text">
+        <div id="explanation-text" class="explanation-text">
             > EXECUTING CLIMATE-AWARE REBALANCING...<br>
             > [WHY THIS DECISION?] Portfolio concentration in fossil energy (XOM) exceeded transition risk threshold (5%). System automated rotation into ESG-weighted Tech (MSFT) to maintain risk-adjusted returns while lowering carbon intensity. 🛡️ Safe-Guard confirmed liquidity at execution time.
         </div>
@@ -243,7 +245,7 @@
             <img src="https://alpaca.markets/favicon.ico" width="16" alt="AlpacaLogo">
             <span>ALPACA SIMULATION MODE</span>
         </div>
-        <div style="font-weight:700; color:var(--neon-lime)">
+        <div id="execution-status-text" style="font-weight:700; color:var(--neon-lime)">
             STATUS: Order Executed 09:41:22 EST
         </div>
     </div>
@@ -262,6 +264,6 @@
         <div style="font-size:0.7rem; color:var(--muted-text)">© 2026 SENTINEL SYSTEMS INC.</div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=2026040303"></script>
 </body>
 </html>

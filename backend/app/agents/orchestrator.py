@@ -82,7 +82,8 @@ def orchestrate(input_data: dict) -> dict:
     
     return {
         "portfolio": portfolio,
-        "climate_scores": climate_scores,
+        "climate_data": climate_scores,
+        "financial_data": financial_data,
         "simulation": simulation,
         "trade": trade,
         "guard": guard,

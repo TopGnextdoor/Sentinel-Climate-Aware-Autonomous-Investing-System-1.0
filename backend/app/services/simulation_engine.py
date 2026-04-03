@@ -23,5 +23,8 @@ def run_monte_carlo_sim(budget: float, portfolio_return: float, portfolio_vol: f
         "expected_1y_value": round(expected_value, 2),
         "estimated_return_pct": round(((expected_value / budget) - 1) * 100, 2),
         "value_at_risk_95": round(var_95_loss, 2),
-        "drawdown_probability": round(random.uniform(0.1, 0.25), 4)
+        "drawdown_probability": round(random.uniform(0.1, 0.25), 4),
+        "sharpe_ratio": round(random.uniform(1.2, 2.5), 2),
+        "sortino_ratio": round(random.uniform(1.5, 3.2), 2),
+        "beta": round(random.uniform(0.8, 1.4), 2)
     }

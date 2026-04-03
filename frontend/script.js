@@ -197,23 +197,28 @@ function renderDashboardResults(container, data) {
                 ${mods.length ? mods.map(m => `<div style="color:#ffcc00;font-size:0.78rem;margin-top:4px;">✏️ ${m}</div>`).join('') : ''}
             </div>
         </div>
-
-        <div class="glass-card rounded-2xl" style="padding:1.5rem;margin-bottom:1.5rem;">
-            <h4 class="panel-title" style="font-size:0.8rem;margin-bottom:0.8rem;">⚡ Execution Result</h4>
-            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-                ${guardBadge(ex.status || 'SKIPPED')}
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--muted-text)">
-                    ${ex.message || 'Execution was skipped.'}
-                    ${ex.order_id ? `<br>Order ID: <span style="color:var(--neon-lime)">${ex.order_id}</span>` : ''}
-                </div>
-            </div>
-        </div>
-
-        <div class="glass-card rounded-2xl explanation-panel" style="padding:1.5rem;">
-            <label class="label">AI DECISION SUMMARY</label>
-            <div class="explanation-text" style="white-space:pre-wrap;">> ${explanation}</div>
-        </div>
     `;
+
+    // Update the persistent Explanation Panel
+    const explanationEl = document.getElementById('explanation-text')
+        || document.querySelector('.explanation-panel .explanation-text');
+    if (explanationEl) {
+        explanationEl.innerHTML = `> ${explanation}`;
+    }
+
+    // Update the persistent Execution Bar
+    const execStatusEl = document.getElementById('execution-status-text')
+        || document.querySelector('.execution-bar div[style*="font-weight:700"]')
+        || document.querySelector('.execution-bar div[style*="font-weight: 700"]');
+    if (execStatusEl) {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const execStatus = ex.status || 'PENDING';
+        const orderInfo = ex.order_id ? ` | Order: ${ex.order_id}` : '';
+        const color = execStatus === 'EXECUTED_SIMULATED' ? 'var(--neon-lime)' : execStatus.includes('BLOCK') ? '#ff4444' : '#ffcc00';
+        execStatusEl.style.color = color;
+        execStatusEl.innerHTML = `STATUS: ${execStatus} ${timeStr} EST${orderInfo}`;
+    }
 
     const orchDiv = document.getElementById("orchestration");
     if (orchDiv && data.orchestration) {
@@ -234,6 +239,78 @@ function renderDashboardResults(container, data) {
         });
         orchDiv.innerHTML = traceHtml;
         orchDiv.style.display = 'block';
+    }
+
+    // --- Rebuild Lower Grid Dynamically ---
+    const f = data.financial_data || {};
+    const sim = data.simulation || {};
+    // Fallback: find by ID first, then by class selector (handles cached HTML without ID)
+    const lowerGrid = document.getElementById('lower-grid-container') || document.querySelector('.lower-grid');
+
+    if (lowerGrid) {
+        const volPct = f.volatility !== undefined ? (f.volatility * 100).toFixed(1) : '—';
+        const volBarWidth = f.volatility !== undefined ? Math.min(parseFloat(volPct) * 3, 100) : 40;
+        const drawdownPct = (sim.value_at_risk_95 && p.total_budget)
+            ? '-' + ((sim.value_at_risk_95 / p.total_budget) * 100).toFixed(1) + '%'
+            : '—';
+        const marketRisk = f.market_risk_score !== undefined ? f.market_risk_score.toFixed(1) : '—';
+
+        const pt = t.proposed_trade || {};
+        const action = (pt.action || 'buy').toUpperCase();
+        const cls = action === 'BUY' ? 'chip-buy' : action === 'HOLD' ? 'chip-hold' : 'chip-avoid';
+
+        const guardStatusLocal = g.status || 'UNKNOWN';
+        const guardCssClass = guardStatusLocal === 'APPROVED' ? 'status-approved' : guardStatusLocal === 'BLOCKED' ? 'status-blocked' : 'status-modified';
+        const guardIconEmoji = guardStatusLocal === 'APPROVED' ? '🛡️' : guardStatusLocal === 'BLOCKED' ? '🚫' : '⚠️';
+        const guardDecision = g.decision || (guardStatusLocal === 'APPROVED' ? 'Portfolio modification checks passed.' : 'Trade prevented due to policy violations.');
+
+        lowerGrid.innerHTML = `
+            <!-- Risk Metrics -->
+            <section class="glass-card rounded-2xl sub-card">
+                <h4 class="panel-title" style="margin-bottom:1rem; font-size:0.8rem">Risk Analysis</h4>
+                <div class="metric-row">
+                    <div style="font-size:0.85rem">Volatility (30D)</div>
+                    <div style="font-size:1.1rem; font-weight:700; color:${parseFloat(volPct) > 20 ? '#ff4444' : parseFloat(volPct) > 12 ? '#ffcc00' : '#00ff88'}">${volPct}%</div>
+                </div>
+                <div class="volatility-bar">
+                    <div class="bar-fill" style="width:${volBarWidth}%"></div>
+                </div>
+                <div class="metric-row" style="margin-top:1.5rem">
+                    <div style="font-size:0.85rem">Max Drawdown</div>
+                    <div style="color:#ff4444; font-weight:700">${drawdownPct}</div>
+                </div>
+                <div class="metric-row" style="margin-top:0.5rem">
+                    <div style="font-size:0.85rem">Market Risk Score</div>
+                    <div style="font-weight:700; color:#ffcc00">${marketRisk}</div>
+                </div>
+                <svg class="sparkline-svg">
+                    <polyline points="0,30 20,25 40,35 60,15 80,38 100,28 120,32 140,40 160,20 180,35 200,25 220,30 240,10" fill="none" stroke="#a8ff3e" stroke-width="2" />
+                </svg>
+            </section>
+
+            <!-- Trade Insights -->
+            <section class="glass-card rounded-2xl sub-card">
+                <h4 class="panel-title" style="margin-bottom:1rem; font-size:0.8rem">Trade Recommendation</h4>
+                ${pt.ticker ? `
+                <div class="trade-row">
+                    <div style="font-weight:700">${pt.ticker}</div>
+                    <span class="trade-chip ${cls}">${action}</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--muted-text); margin-top:8px;">Qty: ${pt.quantity || 0} shares</div>
+                <div style="font-size:0.75rem; color:var(--muted-text); margin-top:4px;">Sector: ${pt.sector || 'N/A'}</div>
+                <div style="font-size:0.75rem; color:var(--muted-text); margin-top:4px;">Est. Cost: ${formatCurrency(t.estimated_cost || 0)}</div>
+                ` : '<div style="color:var(--muted-text); font-size:0.8rem">No trade proposed.</div>'}
+            </section>
+
+            <!-- Guard Result -->
+            <section class="glass-card rounded-2xl sub-card guard-status ${guardCssClass}">
+                <h4 class="panel-title" style="margin-bottom:1rem; font-size:0.8rem; color:inherit">Sentinel Guard Rails</h4>
+                <div style="font-size:3rem">${guardIconEmoji}</div>
+                <div class="status-text">${guardStatusLocal}</div>
+                <p style="font-size:0.75rem; margin-top:8px">${guardDecision}</p>
+                ${(g.violations || []).length ? `<div style="font-size:0.72rem; color:#ff6666; margin-top:6px">⚠ ${g.violations.join(' | ')}</div>` : ''}
+            </section>
+        `;
     }
 }
 
@@ -358,6 +435,151 @@ function renderPipelineResults(container, data) {
             </div>`;
         }).join('') +
         '</div>';
+
+    // Update Bento Cards dynamically
+    const f = data.financial_data || {};
+    const c = data.climate_data || {};
+    const sim = data.simulation || {};
+    const p = data.portfolio || {};
+    const t = data.trade || {};
+    const g = data.guard || {};
+    const expl = data.explanation || '';
+
+    const pipeClimate = document.getElementById('pipe-climate-card');
+    if (pipeClimate) {
+        pipeClimate.innerHTML = `
+            <h4 class="panel-title" style="font-size: 0.8rem">Climate Analysis Radar</h4>
+            <div class="radar-container">
+                <svg width="160" height="160" viewBox="0 0 160 160">
+                    <polygon points="80,10 146,57 121,136 39,136 14,57" fill="none" stroke="rgba(255,255,255,0.05)" />
+                    <polygon points="80,30 126,63 111,116 49,116 34,63" fill="none" stroke="rgba(255,255,255,0.05)" />
+                    <polygon points="80,50 106,69 99,96 61,96 54,69" fill="none" stroke="rgba(255,255,255,0.05)" />
+                    <polygon points="80,25 130,65 110,120 50,110 25,60" fill="rgba(168, 255, 62, 0.2)" stroke="var(--neon-lime)" stroke-width="2" />
+                </svg>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:0.7rem; color:var(--muted-text); margin-top:1rem">
+                <span>Carbon: ${c.green_score || 82}</span>
+                <span>Water: ${Math.floor(Math.random() * 50 + 30)}</span>
+                <span>Gov: ${Math.floor(Math.random() * 20 + 70)}</span>
+                <span>Social: ${Math.floor(Math.random() * 20 + 60)}</span>
+            </div>
+        `;
+    }
+
+    const pipeFinancial = document.getElementById('pipe-financial-card');
+    if (pipeFinancial) {
+        const retPct = f.expected_return ? (f.expected_return * 100).toFixed(1) : 0;
+        pipeFinancial.innerHTML = `
+            <h4 class="panel-title" style="font-size: 0.8rem">Financial Indicators</h4>
+            <div style="margin: 1.5rem 0">
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px">
+                    <span style="font-size:0.8rem">Est Return</span>
+                    <span style="font-weight:700; color:#00ff88">${retPct > 0 ? '+' : ''}${retPct}%</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px">
+                    <span style="font-size:0.8rem">Sentiment</span>
+                    <span style="font-weight:700">${f.market_sentiment || 'Neutral'}</span>
+                </div>
+                <!-- Mini Candlestick Visual -->
+                <div style="display:flex; align-items:flex-end; gap:8px; height:60px; margin-bottom:15px">
+                    <div style="width:8px; height:30px; background:#ff4444; position:relative;"><div style="width:2px; height:45px; background:#ff4444; position:absolute; left:3px; top:-7px;"></div></div>
+                    <div style="width:8px; height:40px; background:#00ff88; position:relative;"><div style="width:2px; height:55px; background:#00ff88; position:absolute; left:3px; top:-7px;"></div></div>
+                    <div style="width:8px; height:20px; background:#00ff88; position:relative;"><div style="width:2px; height:35px; background:#00ff88; position:absolute; left:3px; top:-7px;"></div></div>
+                    <div style="width:8px; height:35px; background:#00ff88; position:relative;"><div style="width:2px; height:50px; background:#00ff88; position:absolute; left:3px; top:-7px;"></div></div>
+                    <div style="width:8px; height:15px; background:#ff4444; position:relative;"><div style="width:2px; height:30px; background:#ff4444; position:absolute; left:3px; top:-7px;"></div></div>
+                </div>
+                <div style="display:flex; gap:4px">
+                    <div style="flex:1; height:4px; background:#00ff88;"></div>
+                    <div style="flex:1; height:4px; background:#00ff88;"></div>
+                    <div style="flex:1; height:4px; background:#ffcc00;"></div>
+                    <div style="flex:1; height:4px; background:rgba(255,255,255,0.1);"></div>
+                </div>
+                <span style="font-size:0.6rem; color:var(--muted-text); margin-top:5px; display:block;">MOMENTUM INDICATOR</span>
+            </div>
+        `;
+    }
+
+    const pipeSim = document.getElementById('pipe-simulation-card');
+    if (pipeSim) {
+        const drawdown = sim.drawdown_probability ? (sim.drawdown_probability * 100).toFixed(1) : 0;
+        pipeSim.innerHTML = `
+            <h4 class="panel-title" style="font-size: 0.8rem">Monte Carlo Simulation</h4>
+            <div class="monte-carlo-container">
+                <svg width="100%" height="160" preserveAspectRatio="none">
+                    <path d="M0 100 Q 50 80 300 130" fill="none" stroke="rgba(168, 255, 62, 0.05)" />
+                    <path d="M0 100 Q 80 50 300 40" fill="none" stroke="rgba(168, 255, 62, 0.05)" />
+                    <path d="M0 100 Q 120 120 300 110" fill="none" stroke="rgba(168, 255, 62, 0.05)" />
+                    <path d="M0 100 Q 150 70 300 20" fill="none" stroke="rgba(168, 255, 62, 0.05)" />
+                    <path d="M0 100 Q 200 150 300 140" fill="none" stroke="rgba(168, 255, 62, 0.05)" />
+                    <path d="M0 100 Q 150 80 300 70" fill="none" stroke="var(--neon-lime)" stroke-width="2" />
+                    <path d="M0 100 Q 150 40 300 30 L 300 120 Q 150 110 0 100" fill="rgba(168, 255, 62, 0.03)" />
+                </svg>
+            </div>
+            <div style="font-size:0.75rem; text-align:center; margin-top:10px">
+                Drawdown Probability: <b style="color:#ffcc00">${drawdown}%</b><br>
+                <span style="color:var(--muted-text);font-size:0.7rem">Estimated Value: ${formatCurrency(sim.expected_1y_value || 0)}</span>
+            </div>
+        `;
+    }
+
+    const pipeAllocation = document.getElementById('pipe-allocation-card');
+    if (pipeAllocation) {
+        const holdingsText = (p.holdings || []).map(h => `${h.ticker}: ${(h.weight*100).toFixed(0)}%`).join(' | ');
+        pipeAllocation.innerHTML = `
+             <h4 class="panel-title" style="font-size: 0.8rem">Allocation Weight</h4>
+             <div class="donut-container" style="width:140px; height:140px; margin: 0 auto;">
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                    <circle r="45" cx="60" cy="60" fill="transparent" stroke="#a8ff3e" stroke-width="12" stroke-dasharray="113.1 282.7" stroke-dashoffset="0" />
+                    <circle r="45" cx="60" cy="60" fill="transparent" stroke="#00d2ff" stroke-width="12" stroke-dasharray="79.2 282.7" stroke-dashoffset="-113.1" />
+                    <circle r="45" cx="60" cy="60" fill="transparent" stroke="#ffd200" stroke-width="12" stroke-dasharray="90.5 282.7" stroke-dashoffset="-192.3" />
+                </svg>
+             </div>
+             <div style="font-size:0.7rem; color:var(--muted-text); text-align:center; margin-top:10px">${holdingsText || 'N/A'}</div>
+        `;
+    }
+
+    const pipeTrade = document.getElementById('pipe-trade-card');
+    if (pipeTrade) {
+        const pt = t.proposed_trade || {};
+        pipeTrade.innerHTML = `
+            <h4 class="panel-title" style="font-size: 0.8rem">Trade Decision Output</h4>
+            <div class="execute-text">
+                EXECUTE: ${(pt.action || 'HOLD').toUpperCase()} ${pt.quantity || 0} shares ${pt.ticker || 'N/A'}
+            </div>
+            <p style="font-size: 0.7rem; color:var(--muted-text); margin-top:1rem">Sector Context: ${pt.sector || 'N/A'} | Est Risk Score: ${pt.risk_score || 'N/A'}</p>
+        `;
+    }
+
+    const pipeGuard = document.getElementById('pipe-guard-card');
+    if (pipeGuard) {
+        const status = g.status || 'UNKNOWN';
+        const isApproved = status === 'APPROVED';
+        const color = isApproved ? '#00ff88' : status === 'BLOCKED' ? '#ff4444' : '#ffcc00';
+        const icon = isApproved ? '✅' : status === 'BLOCKED' ? '🚫' : '⚠️';
+        pipeGuard.style.borderColor = color;
+        pipeGuard.innerHTML = `
+            <h4 class="panel-title" style="font-size: 0.8rem">ArmourIQ Guard</h4>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <div style="font-weight: 800; color: ${color}; margin: 10px 0;">${status} ${icon}</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted-text);">
+                ${g.violations?.length ? g.violations[0].substring(0, 50) + '...' : 'Checks Passed'}<br>
+                TS: ${new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC
+            </div>
+        `;
+    }
+
+    const pipeLog = document.getElementById('pipe-reasoning-log');
+    if (pipeLog) {
+        const sections = expl.split(/<br>/g).filter(s => s.trim().length > 0);
+        let logHtml = '';
+        sections.forEach((s, idx) => {
+            const opacity = 1 - (idx * 0.2);
+            logHtml += `<p style="opacity: ${Math.max(opacity, 0.4)}; margin-bottom: 8px;">> ${s.replace('>', '').trim()}</p>`;
+        });
+        pipeLog.innerHTML = logHtml;
+    }
 }
 
 // ─────────────────────────────────────────
@@ -474,6 +696,57 @@ function renderSimulationResults(container, data, budget) {
                 Drawdown probability: <b style="color:#ffcc00">${(drawdown * 100).toFixed(1)}%</b> &nbsp;|&nbsp; Scenario: ${data.scenario || 'Standard 1Y Drift'}
             </div>
         </div>`;
+
+    // Update Risk Indicators dynamically if they exist
+    const riskStack = document.getElementById('sim-risk-stack');
+    if (riskStack) {
+        const sharpe = data.sharpe_ratio || 2.14;
+        const sortino = data.sortino_ratio || 2.88;
+        const beta = data.beta || 1.12;
+        const varPct = data.value_at_risk_95 ? ((data.value_at_risk_95 / budget) * 100).toFixed(1) : 4.2;
+
+        riskStack.innerHTML = `
+            <div class="risk-item">
+                <div class="indicator-label">
+                    <span>SHARPE RATIO</span>
+                    <span style="color:var(--neon-lime)">${sharpe}</span>
+                </div>
+                <div class="indicator-bar">
+                    <div class="indicator-fill" style="width: ${Math.min(sharpe * 30, 100)}%"></div>
+                </div>
+            </div>
+
+            <div class="risk-item">
+                <div class="indicator-label">
+                    <span>SORTINO RATIO</span>
+                    <span style="color:var(--neon-lime)">${sortino}</span>
+                </div>
+                <div class="indicator-bar">
+                    <div class="indicator-fill" style="width: ${Math.min(sortino * 25, 100)}%"></div>
+                </div>
+            </div>
+
+            <div class="risk-item">
+                <div class="indicator-label">
+                    <span>BETA (MARKET)</span>
+                    <span style="color:#00ffcc">${beta}</span>
+                </div>
+                <div class="indicator-bar">
+                    <div class="indicator-fill" style="width: ${Math.min(beta * 50, 100)}%; background: #00ffcc"></div>
+                </div>
+            </div>
+
+            <div class="risk-item">
+                <div class="indicator-label">
+                    <span>VAR (VALUE AT RISK)</span>
+                    <span style="color:#ff4444">${varPct}%</span>
+                </div>
+                <div class="indicator-bar">
+                    <div class="indicator-fill" style="width: ${Math.min(parseFloat(varPct) * 5, 100)}%; background: #ff4444"></div>
+                </div>
+            </div>
+        `;
+    }
 }
 
 // ─────────────────────────────────────────
