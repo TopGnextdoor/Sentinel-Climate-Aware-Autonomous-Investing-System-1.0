@@ -1,117 +1,142 @@
 Sentinel AI – Climate-Aware Autonomous Investing
-Overview
-Sentinel AI is a multi-agent autonomous investment system that combines financial analysis with climate risk intelligence. It uses OpenClaw for orchestration and ArmourIQ for enforcing safe and compliant decisions.
 
-The system does not just predict returns, it ensures that every investment is explainable, risk-aware, and policy-compliant.
+OVERVIEW
 
-Problem Statement
-Traditional investment platforms focus only on financial returns while ignoring climate risks such as environmental exposure, regulatory changes, and sustainability impact.
+•	Sentinel AI is a multi-agent autonomous investment system that combines financial analysis with climate risk intelligence. It uses OpenClaw for orchestration and ArmourIQ for enforcing safe and compliant decisions.
 
-Additionally, AI-driven systems often lack transparency and safety, making their decisions hard to trust.
+•	The system does not just predict returns, it ensures that every investment is explainable, risk-aware, and policy-compliant.
+________________________________________
 
-Solution
+PROBLEM STATEMENT
+
+•	Traditional investment platforms focus only on financial returns while ignoring climate risks such as environmental exposure, regulatory changes, and sustainability impact.
+
+•	Additionally, AI-driven systems often lack transparency and safety, making their decisions hard to trust.
+________________________________________
+
+SOLUTION
+
 Sentinel AI introduces a multi-agent architecture where each agent performs a specific role:
 
-Financial Analysis Agent evaluates market trends
+•	Financial Analysis Agent evaluates market trends
 
-Climate Risk Agent assesses ESG and environmental exposure
+•	Climate Risk Agent assesses ESG and environmental exposure
 
-Simulation Agent predicts future performance
+•	Simulation Agent predicts future performance
 
-Portfolio Agent generates optimized allocations
+•	Portfolio Agent generates optimized allocations
 
-Trader Agent executes trades
+•	Trader Agent executes trades
 
-Guard Agent (powered by ArmourIQ) enforces safety and policy constraints
+•	Guard Agent (powered by ArmourIQ) enforces safety and policy constraints
 
-Explain Agent provides clear reasoning behind decisions
-
+•	Explain Agent provides clear reasoning behind decisions
 This ensures decisions are intelligent, transparent, and safe.
 
-Key Features
-Multi-Agent Decision System
-Each step of investment is handled by specialized AI agents coordinated using OpenClaw.
+________________________________________
 
-Climate Risk Integration
-Every stock is evaluated not only financially but also based on environmental and sustainability risks.
+KEY FEATURES
 
+MULTI AGENT DECISION SYSTEM
+
+•	Each step of investment is handled by specialized AI agents coordinated using OpenClaw.
+
+CLIMATE RISK INTEGRATION
+
+•	Every stock is evaluated not only financially but also based on environmental and sustainability risks.
 Guardrails with ArmourIQ
-All trades pass through a policy enforcement layer:
 
-Blocks high-risk or non-compliant trades
+ALL TRADES PASS THROUGH A POLICY ENFORCEMENT LAYER:
 
-Enforces user-defined constraints
+•	Blocks high-risk or non-compliant trades
 
-Ensures safe AI behavior
+•	Enforces user-defined constraints
 
-Explainable AI
-Every decision includes a human-readable explanation.
+•	Ensures safe AI behavior
 
+EXPLAINABLE AI
+
+•	Every decision includes a human-readable explanation.
 Simulation Engine
-Monte Carlo simulations predict possible future outcomes and risk probabilities.
 
-Tech Stack
-Frontend
-HTML
+•	Monte Carlo simulations predict possible future outcomes and risk probabilities.
+________________________________________
 
-CSS
+TECH STACK
 
-JavaScript
+FRONTEND
 
-Chart.js for visualizations
+•	HTML
 
-Backend
-Python (FastAPI)
+•	CSS
 
-REST API architecture
+•	JavaScript
 
-Modular agent-based system
+•	Chart.js for visualizations
 
-AI Orchestration
-OpenClaw for managing multi-agent workflows
+BACKEND
 
-Handles sequencing: Climate → Financial → Simulation → Portfolio → Trade
+•	Python (FastAPI)
 
-Safety Layer
-ArmourIQ for policy enforcement
+•	REST API architecture
 
-Validates every trade before execution
+•	Modular agent-based system
 
-Maintains decision logs and constraints
+AI ORCHESTRATION
 
-Data & Processing
-NumPy for simulations
+•	OpenClaw for managing multi-agent workflows
 
-External APIs for market and climate data
+•	Handles sequencing: Climate → Financial → Simulation → Portfolio → Trade
+
+SAFETY LAYER
+
+•	ArmourIQ for policy enforcement
+
+•	Validates every trade before execution
+
+•	Maintains decision logs and constraints
+
+DATA AND PROCESSING
+
+•	NumPy for simulations
+
+•	External APIs for market and climate data
 
 Trading Integration
-Alpaca API (paper trading) for executing trades
 
-API Endpoints
-Core
-POST /analyze – Main pipeline execution
+•	Alpaca API (paper trading) for executing trades
 
+________________________________________
+
+API ENDPOINTS
+
+CORE
+
+•	POST /analyze – Main pipeline execution
 Supporting
-POST /portfolio – Portfolio generation
 
-GET /climate-scores – Climate data
+•	POST /portfolio – Portfolio generation
 
-POST /simulate – Run simulations
+•	GET /climate-scores – Climate data
 
+•	POST /simulate – Run simulations
 Guard (ArmourIQ)
-POST /validate-trade – Check trade safety
 
-GET /policies – Active constraints
+•	POST /validate-trade – Check trade safety
 
+•	GET /policies – Active constraints
 Trading
-POST /execute-trade – Execute via Alpaca
 
+•	POST /execute-trade – Execute via Alpaca
 Utility
-POST /explain – Generate explanation
 
-GET /health – Server status
+•	POST /explain – Generate explanation
 
-System Flow
+•	GET /health – Server status
+________________________________________
+
+SYSTEM FLOW
+
 Frontend → /analyze → Master Agent
 → Climate Analysis
 → Financial Analysis
@@ -122,23 +147,27 @@ Frontend → /analyze → Master Agent
 → Execute / Block
 → Explain Agent
 → Response to UI
+________________________________________
 
-Unique Value
-Combines finance + climate intelligence
+UNIQUE VALUES
 
-Transparent AI decision-making
+•	Combines finance + climate intelligence
 
-Built-in safety with ArmourIQ
+•	Transparent AI decision-making
 
-Real-time explainable pipeline
+•	Built-in safety with ArmourIQ
 
-Multi-agent architecture using OpenClaw
+•	Real-time explainable pipeline
 
-Future Scope
-Real-time live trading integration
+•	Multi-agent architecture using OpenClaw
+________________________________________
 
-Personalized AI strategies
+FUTURE SCOPE
 
-Advanced ESG datasets
+•	Real-time live trading integration
 
-Mobile application
+•	Personalized AI strategies
+
+•	Advanced ESG datasets
+•	Mobile application
+
