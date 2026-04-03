@@ -51,7 +51,9 @@ Sentinel solves both by making every investment decision **climate-aware**, **po
 ### Dashboard
 The main interface shows portfolio value, risk tolerance settings, ESG constraints, and the Climate Resilience score with ArmourIQ Shield active.
 
-![Dashboard](https://github.com/TopGnextdoor/Sentinel-Climate-Aware-Autonomous-Investing-System-1.0/raw/main/frontend/dashboard.html)
+<img width="1919" height="970" alt="Screenshot 2026-04-03 185021" src="https://github.com/user-attachments/assets/651244b9-28a0-4cd7-a473-2d660e262b67" />
+
+<img width="1919" height="967" alt="Screenshot 2026-04-03 185040" src="https://github.com/user-attachments/assets/fa1984c7-1698-45bf-ab5e-07558c7d36a9" />
 
 > Portfolio: $284,500.73 (+14.2% 30D) | Climate Resilience: 72/100 | ArmourIQ Shield: ACTIVE
 
@@ -60,20 +62,30 @@ The main interface shows portfolio value, risk tolerance settings, ESG constrain
 ### Analysis Pipeline (OpenClaw Multi-Agent)
 Displays the live agent execution trace: Climate → Financial → Simulation → Portfolio → Trade → Guard → Trader → Explain. Each step is labeled Completed, Skipped, or Blocked.
 
+<img width="1919" height="970" alt="Screenshot 2026-04-03 185133" src="https://github.com/user-attachments/assets/00e0a9e5-3502-452f-9004-899324355669" />
+
+<img width="1919" height="970" alt="Screenshot 2026-04-03 185133" src="https://github.com/user-attachments/assets/98bb7beb-1149-4bc2-9faf-4fb2158c2397" />
+
 ---
 
 ### Simulator
 Monte Carlo simulation engine with configurable investment amount, stock ticker, duration (1M–5Y), and risk appetite. Shows Best Case / Median / Worst Case trajectories with Sharpe Ratio, Sortino Ratio, Beta, and Value at Risk.
+
+<img width="1919" height="973" alt="Screenshot 2026-04-03 185214" src="https://github.com/user-attachments/assets/9fdc6a7c-e8df-4588-bd15-c997aec56666" />
 
 ---
 
 ### Guard & Policies (Trade Enforcement)
 Visual flowchart of the trade validation logic: Size OK? → Climate Risk? → Execute/Block. Includes a real-time Trade Testing Tool with APPROVE/REJECT output.
 
+<img width="1919" height="966" alt="Screenshot 2026-04-03 185243" src="https://github.com/user-attachments/assets/6785c1c7-75d9-492d-a6de-ec7e3017fe76" />
+
 ---
 
 ### Insights / Impact (Portfolio Climate Intelligence)
 Asset ESG Profiles (NVDA, MSFT, AAPL, CVX, XOM), Sector Exposure Limits with carbon-heavy flags, Climate Risk Matrix across Carbon/Water/Waste/Trans/Phys axes, and overall Portfolio Rating gauge.
+
+<img width="1919" height="968" alt="Screenshot 2026-04-03 185258" src="https://github.com/user-attachments/assets/787ab9c7-7c77-4046-91a0-5161f4ddc59c" />
 
 ---
 
