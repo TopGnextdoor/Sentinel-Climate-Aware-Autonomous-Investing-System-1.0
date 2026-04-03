@@ -2,7 +2,7 @@ from typing import Dict, Any
 from app.services.trading_service import execute_alpaca_trade
 import random
 
-def generate_trade_proposals(portfolio: Dict[str, Any], max_trade: float) -> Dict[str, Any]:
+def generate_trade_proposals(allowed_assets: list, max_trade: float) -> Dict[str, Any]:
     """Agent for generating actual paper trades (Pre-Guard Intent Generation)."""
     # Meta data mapping to test Guard Rules dynamically
     ticker_meta = {
@@ -13,9 +13,13 @@ def generate_trade_proposals(portfolio: Dict[str, Any], max_trade: float) -> Dic
         "NEE": {"sector": "renewables", "risk_score": 20, "price": 70.00}
     }
     
-    # Dynamically pick a target to demonstrate varied Guard Decisions
-    target_ticker = random.choice(list(ticker_meta.keys()))
-    meta = ticker_meta[target_ticker]
+    if not allowed_assets:
+        # Fallback if somehow empty, but theoretically upstream filters it
+        allowed_assets = ["AAPL"]
+        
+    target_ticker = random.choice(allowed_assets)
+    # Ensure meta fallback if ticker randomly selected isn't in test meta map
+    meta = ticker_meta.get(target_ticker, {"sector": "unknown", "risk_score": 50, "price": 150.0})
     
     # Calculate a valid quantity based on max_trade budget context
     price = meta["price"]

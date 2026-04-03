@@ -133,12 +133,54 @@ function initDashboard() {
         const avoid_sectors = avoidChips.length > 0 ? avoidChips : [];
 
         resultsContainer.style.display = 'block';
-        setLoading(resultsContainer, true);
         runBtn.disabled = true;
         runBtn.style.opacity = '0.6';
 
+        const bootSteps = [
+            '[ CLIMATE AGENT ]  Analyzing ESG sector constraints...',
+            '[ FINANCIAL AGENT ]  Fetching market sentiment & return metrics...',
+            '[ SIMULATION ]  Running Monte Carlo risk scenarios...',
+            '[ PORTFOLIO ]  Optimizing climate-weighted allocation...',
+            '[ TRADER ]  Generating trade intent from allowed assets...',
+            '[ GUARD ]  Validating intent against policy constraints...',
+            '[ EXPLAINER ]  Composing AI reasoning summary...'
+        ];
+
+        resultsContainer.innerHTML = `<div id="boot-log" style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--neon-lime); line-height:2; padding:1.2rem 1.5rem; background:rgba(0,0,0,0.4); border-radius:12px; border:1px solid rgba(168,255,62,0.15);"><div style="color:#a8ff3e; font-weight:800; font-size:0.9rem; margin-bottom:1rem; letter-spacing:0.05em;">⚡ SENTINEL ORCHESTRATION STARTING...</div></div>`;
+        const bootLog = document.getElementById('boot-log');
+
+        // Animation promise — each step appears at i * 500ms, guaranteed
+        const animationPromise = new Promise(resolve => {
+            bootSteps.forEach((step, i) => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.style.cssText = 'opacity:0; transition:opacity 0.4s ease; padding:3px 0; color:var(--neon-lime);';
+                    line.textContent = '> ' + step;
+                    bootLog.appendChild(line);
+                    void line.offsetHeight; // force reflow so transition fires
+                    line.style.opacity = '1';
+
+                    if (i === bootSteps.length - 1) {
+                        setTimeout(() => {
+                            const done = document.createElement('div');
+                            done.style.cssText = 'color:#00ffcc; font-weight:700; margin-top:10px; opacity:0; transition:opacity 0.4s ease;';
+                            done.textContent = '> [ALL AGENTS COMPLETE] Rendering results...';
+                            bootLog.appendChild(done);
+                            void done.offsetHeight;
+                            done.style.opacity = '1';
+                            setTimeout(resolve, 700);
+                        }, 500);
+                    }
+                }, i * 500);
+            });
+        });
+
+        // Fire API in parallel
+        const apiPromise = runAnalysis({ budget, risk_level, max_trade, avoid_sectors });
+
         try {
-            const data = await runAnalysis({ budget, risk_level, max_trade, avoid_sectors });
+            // Wait for BOTH animation to finish AND api to return
+            const [data] = await Promise.all([apiPromise, animationPromise]);
             renderDashboardResults(resultsContainer, data);
         } catch (err) {
             showError(resultsContainer, err.message);
@@ -173,7 +215,18 @@ function renderDashboardResults(container, data) {
         ? violations.map(v => `<div style="color:#ff6666;font-size:0.78rem;margin-bottom:4px;">• ${v}</div>`).join('')
         : '<div style="color:#00ff88;font-size:0.78rem;">✓ No violations</div>';
 
-    container.innerHTML = `
+    const hasViolations = (g.violations && g.violations.length > 0) || (t.status === 'INVALID');
+    const alignmentText = hasViolations ? '❌ FAILED' : '✅ PASSED';
+    const alignmentColor = hasViolations ? '#ff4444' : '#00ff88';
+
+    const alignmentUI = `
+        <div class="glass-card rounded-2xl" style="padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; border: 1px solid ${alignmentColor}40;">
+            <span style="font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">Constraint Alignment:</span>
+            <span style="color: ${alignmentColor}; font-weight: 800; font-size: 0.9rem;">${alignmentText}</span>
+        </div>
+    `;
+
+    container.innerHTML = alignmentUI + `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
 
             <div class="glass-card rounded-2xl sub-card">
@@ -331,12 +384,54 @@ function initPipeline() {
         const avoid_sectors = sectorsRaw.split(',').map(s => s.trim()).filter(Boolean);
 
         pipelineOutput.style.display = 'block';
-        setLoading(pipelineOutput, true);
         runBtn.disabled = true;
         runBtn.style.opacity = '0.6';
 
+        const pipeSteps = [
+            '[ SENTINEL ]  Initializing orchestration pipeline...',
+            '[ CLIMATE AGENT ]  Filtering assets by ESG constraints...',
+            '[ FINANCIAL AGENT ]  Assessing market risk and return projections...',
+            '[ SIMULATION ]  Executing Monte Carlo scenarios across 100 paths...',
+            '[ PORTFOLIO ]  Applying ESG-weighted asset allocation...',
+            '[ TRADER ]  Proposing intent from climate-approved assets...',
+            '[ GUARD ]  Running policy enforcement rules...',
+            '[ EXPLAINER ]  Generating AI reasoning log...'
+        ];
+
+        pipelineOutput.innerHTML = `<div id="pipe-boot-log" style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--neon-lime); line-height:2; padding:1.2rem 1.5rem; background:rgba(0,0,0,0.4); border-radius:12px; border:1px solid rgba(168,255,62,0.15);"><div style="color:#a8ff3e; font-weight:800; font-size:0.9rem; margin-bottom:1rem; letter-spacing:0.05em;">⚡ SENTINEL PIPELINE INITIALIZING...</div></div>`;
+        const pipeLog = document.getElementById('pipe-boot-log');
+
+        // Animation promise — each step appears at i * 500ms, guaranteed
+        const pipeAnimPromise = new Promise(resolve => {
+            pipeSteps.forEach((step, i) => {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.style.cssText = 'opacity:0; transition:opacity 0.4s ease; padding:3px 0; color:var(--neon-lime);';
+                    line.textContent = '> ' + step;
+                    pipeLog.appendChild(line);
+                    void line.offsetHeight; // force reflow
+                    line.style.opacity = '1';
+
+                    if (i === pipeSteps.length - 1) {
+                        setTimeout(() => {
+                            const done = document.createElement('div');
+                            done.style.cssText = 'color:#00ffcc; font-weight:700; margin-top:10px; opacity:0; transition:opacity 0.4s ease;';
+                            done.textContent = '> [PIPELINE COMPLETE] Building visualization...';
+                            pipeLog.appendChild(done);
+                            void done.offsetHeight;
+                            done.style.opacity = '1';
+                            setTimeout(resolve, 700);
+                        }, 500);
+                    }
+                }, i * 500);
+            });
+        });
+
+        // Fire API in parallel
+        const pipeApiPromise = runAnalysis({ budget, risk_level, max_trade, avoid_sectors });
+
         try {
-            const data = await runAnalysis({ budget, risk_level, max_trade, avoid_sectors });
+            const [data] = await Promise.all([pipeApiPromise, pipeAnimPromise]);
             renderPipelineResults(pipelineOutput, data);
         } catch (err) {
             showError(pipelineOutput, err.message);
@@ -379,6 +474,9 @@ function renderPipelineResults(container, data) {
             label: '📤 Trade Proposal',
             key: 'trade',
             render: d => {
+                if (d.status === 'INVALID') {
+                    return `<div style="color:#ffcc00; font-size:0.85rem;">No valid trade generated due to constraints</div>`;
+                }
                 const pt = d.proposed_trade || {};
                 return `<div>${pt.action?.toUpperCase()} <b>${pt.ticker}</b> × ${pt.quantity}</div>
                 <div style="font-size:0.78rem;color:var(--muted-text);margin-top:4px;">Estimated Cost: ${formatCurrency(d.estimated_cost)}</div>`;
@@ -418,7 +516,32 @@ function renderPipelineResults(container, data) {
         }
     ];
 
-    container.innerHTML = '<div style="display:flex;flex-direction:column;gap:1rem;">' +
+    let flowHtml = '';
+    if (data.orchestration) {
+        flowHtml = `<div class="glass-card" style="padding:1.5rem; margin-bottom:2rem; border-radius:12px; display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:center;">`;
+        data.orchestration.forEach((step, i) => {
+            let icon = '✅';
+            let color = '#00ff88';
+            if (step.status === 'blocked') { icon = '❌'; color = '#ff4444'; }
+            else if (step.status === 'skipped') { icon = '⏭'; color = '#ffcc00'; }
+            
+            const capAgent = step.agent.charAt(0).toUpperCase() + step.agent.slice(1);
+            const capStatus = step.status.charAt(0).toUpperCase() + step.status.slice(1);
+            
+            flowHtml += `
+                <div style="background:rgba(0,0,0,0.4); border:1px solid ${color}40; border-radius:8px; padding:10px 16px; font-family:'JetBrains Mono', monospace; font-size:0.8rem; color:#fff; display:flex; flex-direction:column; align-items:center; min-width:110px;">
+                    <span style="font-weight:700; margin-bottom:6px;">[ ${capAgent} ]</span>
+                    <span style="color:${color}; font-size:0.7rem; display:flex; align-items:center; gap:4px;">${icon} ${capStatus}</span>
+                </div>
+            `;
+            if (i < data.orchestration.length - 1) {
+                flowHtml += `<span style="color:var(--muted-text); font-weight:800; font-size:1.2rem;">→</span>`;
+            }
+        });
+        flowHtml += `</div>`;
+    }
+
+    container.innerHTML = flowHtml + '<div style="display:flex;flex-direction:column;gap:1.5rem;">' +
         stages.map((stage, i) => {
             const val = data[stage.key];
             const hasData = val !== undefined && val !== null;
@@ -930,15 +1053,13 @@ function renderClimateInsights(container, data) {
 }
 
 // ─────────────────────────────────────────
-//  INIT ROUTER — detect page and mount
+//  INIT ROUTER — detect page by element presence
 // ─────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-    const page = window.location.pathname.split('/').pop();
-
-    if (page === 'dashboard.html' || page === '') initDashboard();
-    if (page === 'pipeline.html')   initPipeline();
-    if (page === 'simulator.html')  initSimulator();
-    if (page === 'guard.html')      initGuard();
-    if (page === 'insights.html')   initInsights();
+    if (document.getElementById('run-analysis-btn'))  initDashboard();
+    if (document.getElementById('run-pipeline-btn'))  initPipeline();
+    if (document.getElementById('run-sim-btn'))       initSimulator();
+    if (document.getElementById('btn-validate'))      initGuard();
+    if (document.getElementById('insights-output') || document.getElementById('insights-trigger')) initInsights();
 });

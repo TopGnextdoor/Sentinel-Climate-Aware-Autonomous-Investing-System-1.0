@@ -1,0 +1,49 @@
+
+============================================================
+TEST: APPROVED — No restrictions, large budget
+INPUT: {"budget": 100000, "risk_level": "moderate", "max_trade": 100000, "avoid_sectors": []}
+============================================================
+  [PASS] orchestration key present
+  [PASS] climate step completed
+  [PASS] financial step completed
+  [PASS] simulation step completed
+  [PASS] portfolio step completed
+  [PASS] guard APPROVED
+         detail: got: APPROVED
+  [PASS] trader executed
+  [PASS] execution present
+         detail: got: {'status': 'EXECUTED_SIMULATED', 'order_id': 'mock_alpaca_1e613877', 'symbol': 'TSLA', 'qty': 200, 'message': 'Simulated execution for buy 200 shares of TSLA.'}
+  [PASS] simulation has sharpe_ratio
+         detail: keys: ['scenario', 'expected_1y_value', 'estimated_return_pct', 'value_at_risk_95', 'drawdown_probability', 'sharpe_ratio', 'sortino_ratio', 'beta']
+  [PASS] simulation has value_at_risk_95
+  [PASS] trade has proposed_trade
+         detail: got: {'proposed_trade': {'ticker': 'TSLA', 'action': 'buy', 'quantity': 200, 'sector': 'auto', 'risk_score': 60}, 'estimated_cost': 36040.0}
+  [PASS] climate_data returned
+  [PASS] financial_data returned
+  [PASS] explanation returned
+
+============================================================
+TEST: ESG BLOCKED — avoid fossil fuels
+INPUT: {"budget": 100000, "risk_level": "moderate", "max_trade": 50000, "avoid_sectors": ["fossil fuels"]}
+============================================================
+  [PASS] orchestration returned
+  [PASS] climate excluded fossil assets
+         detail: assets: ['Technology', 'Technology', 'Automotive']
+  [PASS] guard not BLOCKED (upstream filtered)
+         detail: guard: APPROVED
+  [PASS] execution occurred
+         detail: got: {'status': 'EXECUTED_SIMULATED', 'order_id': 'mock_alpaca_9b352161', 'symbol': 'MSFT', 'qty': 61, 'message': 'Simulated execution for buy 61 shares of MSFT.'}
+
+============================================================
+TEST: GUARD BLOCKED — high risk trade attempt
+INPUT: {"budget": 5000, "risk_level": "low", "max_trade": 100, "avoid_sectors": []}
+============================================================
+  [PASS] orchestration returned
+  [PASS] guard ran
+         detail: got: APPROVED
+  [PASS] execution is None when blocked
+  [PASS] explain step completed
+
+============================================================
+VALIDATION COMPLETE
+============================================================

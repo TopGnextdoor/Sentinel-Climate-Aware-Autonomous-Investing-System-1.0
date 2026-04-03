@@ -29,46 +29,57 @@ def orchestrate(input_data: dict) -> dict:
     financial_data = analyze_market_trends(risk_level)
     orchestration_steps.append({"agent": "financial", "status": "completed"})
     
-    # 3. Simulation (conditional)
-    simulation = None
-    if risk_level.lower() == "high":
-        # Portfolio isn't generated yet based on required order, so pass empty dict
-        simulation = simulate_scenario(budget, {})
-        orchestration_steps.append({"agent": "simulation", "status": "completed"})
-    else:
-        orchestration_steps.append({"agent": "simulation", "status": "skipped"})
+    # 3. Simulation
+    simulation = simulate_scenario(budget, {})
+    orchestration_steps.append({"agent": "simulation", "status": "completed"})
         
     # 4. Portfolio
     portfolio = optimize_portfolio(budget, climate_scores, financial_data)
     orchestration_steps.append({"agent": "portfolio", "status": "completed"})
     
     # 5. Trade
-    trade = generate_trade_proposals(portfolio, max_trade)
+    allowed_assets = [h.get("ticker", "AAPL") for h in portfolio.get("holdings", [])]
+    trade = generate_trade_proposals(allowed_assets, max_trade)
     orchestration_steps.append({"agent": "trade", "status": "completed"})
     
-    # 6. Guard
-    guard_context = {
-        "max_trade_size": max_trade,
-        "max_risk_threshold": 80 if risk_level.lower() != "high" else 95,
-        "max_allocation_pct": 0.20,
-        "portfolio_value": portfolio.get("invested_amount", 0) + portfolio.get("cash_balance", 10000.0)
-    }
-    
     proposed_trade = trade.get("proposed_trade", {})
-    guard = validate_intent(proposed_trade, avoid_sectors, guard_context)
-    orchestration_steps.append({"agent": "guard", "status": "completed"})
+    ticker = proposed_trade.get("ticker", "")
     
-    # 7. Trader (conditional)
     execution = None
-    guard_status = guard.get("status")
-    
-    if guard_status == "APPROVED":
-        final_trade = guard.get("adjusted_trade") or guard.get("original_trade", proposed_trade)
-        execution = execute_trade(final_trade)
-        orchestration_steps.append({"agent": "trader", "status": "completed"})
+    if ticker not in allowed_assets:
+        trade = {
+            "status": "INVALID",
+            "reason": "Asset not allowed by ESG constraints"
+        }
+        guard = {
+            "status": "BLOCKED",
+            "decision": "Safety Layer Rejection",
+            "violations": ["Asset not in allowed universe"]
+        }
+        orchestration_steps.append({"agent": "guard", "status": "skipped"})
+        orchestration_steps.append({"agent": "trader", "status": "skipped"})
     else:
-        status_value = "blocked" if guard_status == "BLOCKED" else "skipped"
-        orchestration_steps.append({"agent": "trader", "status": status_value})
+        # 6. Guard
+        guard_context = {
+            "max_trade_size": max_trade,
+            "max_risk_threshold": 80 if risk_level.lower() != "high" else 95,
+            "max_allocation_pct": 0.20,
+            "portfolio_value": portfolio.get("invested_amount", 0) + portfolio.get("cash_balance", 10000.0)
+        }
+        
+        guard = validate_intent(proposed_trade, avoid_sectors, guard_context)
+        orchestration_steps.append({"agent": "guard", "status": "completed"})
+        
+        # 7. Trader (conditional)
+        guard_status = guard.get("status")
+        
+        if guard_status == "APPROVED":
+            final_trade = guard.get("adjusted_trade") or guard.get("original_trade", proposed_trade)
+            execution = execute_trade(final_trade)
+            orchestration_steps.append({"agent": "trader", "status": "completed"})
+        else:
+            status_value = "blocked" if guard_status == "BLOCKED" else "skipped"
+            orchestration_steps.append({"agent": "trader", "status": status_value})
         
     # 8. Explain
     # Create the state expected by existing generate_explanation

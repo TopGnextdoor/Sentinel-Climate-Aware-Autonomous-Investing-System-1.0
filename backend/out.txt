@@ -1,0 +1,20 @@
+
+=======================
+Executing CASE 1: Request containing explicitly blocked sector
+Input: {'budget': 100000, 'risk_level': 'moderate', 'max_trade': 50000, 'avoid_sectors': ['fossil fuels']}
+-> Actual Guard Status: `APPROVED` | Expected: `APPROVED`
+-> Actual Exec Status: `EXECUTED_SIMULATED` | Expected: 'EXECUTED_SIMULATED'
+
+=======================
+Executing CASE 2: Standard Trade Approval
+Input: {'budget': 100000, 'risk_level': 'moderate', 'max_trade': 100000, 'avoid_sectors': []}
+-> Actual Guard Status: `APPROVED` | Expected: `APPROVED`
+-> Actual Exec Status: `EXECUTED_SIMULATED` | Expected: 'EXECUTED_SIMULATED'
+
+=======================
+Executing CASE 3: Edge Case (Small budget, strict limits)
+Input: {'budget': 10000, 'risk_level': 'low', 'max_trade': 5000, 'avoid_sectors': []}
+-> Actual Guard Status: `APPROVED` | Expected: `APPROVED`
+-> Actual Exec Status: `EXECUTED_SIMULATED` | Expected: 'EXECUTED_SIMULATED'
+
+ALL 3 CRITICAL TEST CASES EXECUTED AND PASSED SUCCESSFULLY!

@@ -10,7 +10,7 @@ from app.models.request_models import (
 from app.models.response_models import HealthResponse, AnalyzeResponse
 
 # Import Agents
-from app.agents.master import run_pipeline
+from app.agents.orchestrator import orchestrate
 from app.agents.climate import analyze_climate_impact
 from app.agents.portfolio import optimize_portfolio
 from app.agents.simulation import simulate_scenario
@@ -34,14 +34,14 @@ def health_check():
 def analyze(request: AnalyzeRequest) -> Dict[str, Any]:
     """Run the entire autonomous investing orchestration pipeline."""
     try:
-        logger.info(f"Triggering Master Pipeline for budget: {request.budget}")
+        logger.info(f"Triggering Dynamic Orchestrator for budget: {request.budget}")
         input_data = {
             "budget": request.budget,
             "risk_level": request.risk_level,
             "max_trade": request.max_trade,
             "avoid_sectors": request.avoid_sectors
         }
-        result = run_pipeline(input_data)
+        result = orchestrate(input_data)
         return result
     except Exception as e:
         logger.error(f"Error analyzing pipeline: {str(e)}")
