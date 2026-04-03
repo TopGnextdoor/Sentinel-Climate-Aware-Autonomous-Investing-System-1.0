@@ -1,6 +1,8 @@
 # 🛡️ SENTINEL
 ### Climate-Aware Autonomous Investing System
 
+![Sentinel Banner](sentinel_banner.svg)
+
 > **An ESG-intelligent multi-agent investment platform that analyzes, simulates, validates, and executes trades — with built-in safety rails and full explainability.**
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
