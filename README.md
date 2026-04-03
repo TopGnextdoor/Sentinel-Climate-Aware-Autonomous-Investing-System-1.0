@@ -3,6 +3,7 @@
 
 <img width="1200" height="400" alt="image" src="https://github.com/user-attachments/assets/e6196cb4-26ee-4cce-b337-b84f36f1272b" />
 
+
 > **An ESG-intelligent multi-agent investment platform that analyzes, simulates, validates, and executes trades — with built-in safety rails and full explainability.**
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
