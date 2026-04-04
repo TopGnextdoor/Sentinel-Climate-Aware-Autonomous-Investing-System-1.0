@@ -18,6 +18,20 @@ from app.agents.guard import validate_intent
 from app.agents.trader import execute_trade
 from app.agents.explain import generate_explanation
 
+# Security & Dependency Injection
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
+from app.utils.security import verify_token
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    payload = verify_token(token)
+    if not payload or "sub" not in payload:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials", headers={"WWW-Authenticate": "Bearer"})
+    user_id = payload.get("sub")
+    return user_id
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -31,7 +45,7 @@ def health_check():
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/analyze", response_model=Dict[str, Any])
-def analyze(request: AnalyzeRequest) -> Dict[str, Any]:
+def analyze(request: AnalyzeRequest, current_user: str = Depends(get_current_user)) -> Dict[str, Any]:
     """Run the entire autonomous investing orchestration pipeline."""
     try:
         logger.info(f"Triggering Dynamic Orchestrator for budget: {request.budget}")
@@ -48,7 +62,7 @@ def analyze(request: AnalyzeRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/portfolio")
-def portfolio(request: PortfolioRequest) -> Dict[str, Any]:
+def portfolio(request: PortfolioRequest, current_user: str = Depends(get_current_user)) -> Dict[str, Any]:
     """Process and optimize a portfolio using the standalone Agent."""
     try:
         logger.info("Triggering distinct Portfolio Agent mapping")
@@ -118,7 +132,7 @@ def get_policies() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/execute-trade")
-def execute_trade_endpoint(request: ExecuteTradeRequest) -> Dict[str, Any]:
+def execute_trade_endpoint(request: ExecuteTradeRequest, current_user: str = Depends(get_current_user)) -> Dict[str, Any]:
     """Force an execution directly to Alpaca paper systems."""
     try:
         logger.info("Triggering Trading Agent manually")
@@ -225,3 +239,27 @@ def get_market_data(
     except Exception as e:
         logger.error(f"Error fetching real market data for {ticker}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch market data from yfinance: {str(e)}")
+
+# ── USER AUTHENTICATION (MVP) ──────────────────────────────────
+from app.models.user import UserCreate, UserLogin, create_user, get_user_by_email, verify_password
+from app.utils.security import create_access_token
+
+@router.post("/signup")
+def signup(user_data: UserCreate):
+    """Register a new user to the MVP database."""
+    try:
+        user = create_user(user_data)
+        access_token = create_access_token({"sub": user.id, "email": user.email, "username": user.username, "role": user.role})
+        return {"message": "User created successfully", "access_token": access_token, "token_type": "bearer"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/login")
+def login(user_data: UserLogin):
+    """Secure Login issuing an ephemeral JWT Bearer identity token."""
+    user = get_user_by_email(user_data.email)
+    if not user or not verify_password(user_data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+    access_token = create_access_token({"sub": user.id, "email": user.email, "username": user.username, "role": user.role})
+    return {"access_token": access_token, "token_type": "bearer"}

@@ -8,6 +8,64 @@ const BASE_URL = window.location.origin.includes('5500') || window.location.orig
     : '';
 
 // ─────────────────────────────────────────
+//  AUTH GUARD & LOGOUT
+// ─────────────────────────────────────────
+(function protectRoutes() {
+    const path = window.location.pathname;
+    const isPublicPage = path.includes('login.html') || path.includes('signup.html') || path.endsWith('/') || path.includes('index.html');
+    const token = localStorage.getItem('token');
+    
+    if (!token && !isPublicPage) {
+        window.location.href = 'login.html';
+    }
+})();
+
+function handleLogout() {
+    localStorage.removeItem('token');
+    window.location.href = 'login.html';
+}
+
+function loadIdentity() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join('')));
+        
+        const username = payload.username || payload.email.split('@')[0];
+        const role = payload.role || 'Institutional Sentinel';
+        const uuid = (payload.sub || '89A4').split('-')[0].toUpperCase();
+        
+        const avatarEl = document.getElementById('hero-avatar');
+        const welcomeEl = document.getElementById('hero-welcome');
+        const tierEl = document.getElementById('hero-account-tier');
+        
+        if (welcomeEl) {
+            // Treat username as clean string instead of deriving from email
+            const cleanName = username.split('.').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
+            welcomeEl.innerText = `Welcome back, ${cleanName}`;
+            
+            if (avatarEl) {
+                const initials = cleanName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                avatarEl.innerText = initials;
+            }
+            
+            if (tierEl) {
+                tierEl.innerHTML = `Account ID: SNTL-${uuid}  •  Tier: ${role}`;
+            }
+        }
+        
+    } catch (e) {
+        console.error("Failed to decode token identity:", e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadIdentity);
+
+// ─────────────────────────────────────────
 //  REAL STOCK PRICES (reference data)
 // ─────────────────────────────────────────
 const STOCK_PRICES = {
@@ -30,8 +88,12 @@ const STOCK_PRICES = {
 async function apiFetch(path, method = 'GET', body = null) {
     const opts = {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
     };
+
     if (body) opts.body = JSON.stringify(body);
     try {
         const res = await fetch(`${BASE_URL}${path}`, opts);
@@ -1020,21 +1082,25 @@ function initGuard() {
 }
 
 async function loadPolicies() {
-    const policyBlock = document.querySelector('.json-block');
-    if (!policyBlock) return;
+    const parentContainer = document.getElementById('policies-container');
+    // For backwards compatibility, if someone has old json-block
+    const targetEl = parentContainer || document.querySelector('.json-block'); 
+    if (!targetEl) return;
+    
     try {
         const data = await getPolicies();
         const policies = data.active_policies || [];
-        policyBlock.innerHTML = policies.map(p =>
-            `<div style="margin-bottom:0.8rem;">
-                <span class="json-key">"${p.id}"</span>: {<br>
-                &nbsp;&nbsp;<span class="json-key">"name"</span>: <span class="json-val-str">"${p.name}"</span>,<br>
-                &nbsp;&nbsp;<span class="json-key">"description"</span>: <span class="json-val-str">"${p.description}"</span><br>
-                }
+        targetEl.innerHTML = policies.map(p =>
+            `<div class="risk-card active" style="padding: 0.8rem; margin-bottom: 0.5rem; display: flex; flex-direction: column; gap: 4px; pointer-events: none;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="font-weight: 700; color: #fff;">${p.name}</div>
+                    <span style="font-size: 0.6rem; background: rgba(168,255,62,0.1); color: var(--neon-lime); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(168,255,62,0.2);">ID: ${p.id}</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--muted-text); line-height: 1.4;">${p.description}</div>
             </div>`
         ).join('');
     } catch (err) {
-        // Keep static fallback
+        if(targetEl) targetEl.innerHTML = `<div style="font-size: 0.8rem; color: #ff4444; padding: 1rem; text-align: center;">Failed to load policies. API Offline.</div>`;
     }
 }
 

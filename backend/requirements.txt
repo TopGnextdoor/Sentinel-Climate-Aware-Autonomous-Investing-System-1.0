@@ -1,8 +1,9 @@
-fastapi==0.111.0
-uvicorn==0.29.0
-pydantic==2.7.1
-python-dotenv==1.0.1
-requests==2.32.2
-pandas==2.2.2
-numpy==1.26.4
-yfinance==0.2.37
+fastapi>=0.111.0
+uvicorn>=0.29.0
+pydantic>=2.7.1
+python-dotenv>=1.0.1
+requests>=2.32.2
+pandas>=2.0.0
+numpy>=1.24.0
+yfinance>=0.2.37
+websockets>=11.0

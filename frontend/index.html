@@ -71,8 +71,8 @@
             <span class="logo-text" style="color:#fff;">SENTINEL</span>
         </div>
         <div class="auth-buttons">
-            <button class="auth-btn btn-signin" onclick="openModal('login')">Sign In</button>
-            <button class="auth-btn btn-signup" onclick="openModal('signup')">Get Started</button>
+            <button class="auth-btn btn-signin" onclick="window.location.href='login.html'">Sign In</button>
+            <button class="auth-btn btn-signup" onclick="window.location.href='signup.html'">Get Started</button>
         </div>
     </nav>
 
@@ -101,73 +101,11 @@
         <div class="scroll-track"><div class="scroll-fill" id="scroll-fill"></div></div>
     </div>
 
-    <!-- Auth Modal -->
-    <div class="modal-overlay" id="auth-modal">
-        <div class="auth-card" style="position: relative;">
-            <div class="close-modal" onclick="closeModal()">×</div>
-            <h2 class="auth-header" id="modal-title">Access Sentinel</h2>
-            <form id="auth-form" onsubmit="handleAuth(event)">
-                <div class="input-group" id="name-group" style="display: none;">
-                    <label>FULL NAME</label>
-                    <input type="text" class="auth-input" placeholder="e.g. Jane Doe" id="input-name">
-                </div>
-                <div class="input-group">
-                    <label>WORK EMAIL</label>
-                    <input type="email" class="auth-input" placeholder="name@company.com" required>
-                </div>
-                <div class="input-group">
-                    <label>PASSWORD</label>
-                    <input type="password" class="auth-input" placeholder="••••••••" required>
-                </div>
-                <button type="submit" class="submit-btn" id="modal-btn">Sign In to Dashboard</button>
-                <div class="auth-switch" id="modal-switch">
-                    Don't have an account? <span onclick="toggleAuthMode()">Sign up here</span>
-                </div>
-            </form>
-        </div>
-    </div>
+
 
     <script>
         // Modal Logic
-        let currentMode = 'login';
-        
-        function openModal(mode) {
-            document.getElementById('auth-modal').classList.add('active');
-            if(mode !== currentMode) toggleAuthMode();
-        }
 
-        function closeModal() {
-            document.getElementById('auth-modal').classList.remove('active');
-        }
-
-        function toggleAuthMode() {
-            currentMode = currentMode === 'login' ? 'signup' : 'login';
-            const isLogin = currentMode === 'login';
-            
-            document.getElementById('modal-title').innerText = isLogin ? 'Access Sentinel' : 'Create Account';
-            document.getElementById('name-group').style.display = isLogin ? 'none' : 'block';
-            document.getElementById('modal-btn').innerText = isLogin ? 'Sign In to Dashboard' : 'Create Account & Proceed';
-            document.getElementById('modal-switch').innerHTML = isLogin 
-                ? `Don't have an account? <span onclick="toggleAuthMode()">Sign up here</span>`
-                : `Already have an account? <span onclick="toggleAuthMode()">Sign in</span>`;
-            
-            if(!isLogin) document.getElementById('input-name').setAttribute('required', 'true');
-            else document.getElementById('input-name').removeAttribute('required');
-        }
-
-        function handleAuth(e) {
-            e.preventDefault();
-            // Simulate Authentication Delay
-            const btn = document.getElementById('modal-btn');
-            const originalText = btn.innerText;
-            btn.innerText = 'Authenticating...';
-            btn.style.opacity = '0.7';
-            
-            setTimeout(() => {
-                // Redirect exactly to the dashboard page we just renamed
-                window.location.href = 'dashboard.html';
-            }, 800);
-        }
 
         // GSAP Title Animations
         gsap.registerPlugin(ScrollTrigger);

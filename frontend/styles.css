@@ -1030,6 +1030,15 @@ footer {
     background: rgba(168, 255, 62, 0.05);
 }
 
+.risk-title {
+    font-weight: 700;
+    transition: 0.3s;
+}
+
+.risk-card.active .risk-title {
+    color: var(--neon-lime);
+}
+
 /* Flowchart Visualization */
 .flowchart-container {
     display: flex;

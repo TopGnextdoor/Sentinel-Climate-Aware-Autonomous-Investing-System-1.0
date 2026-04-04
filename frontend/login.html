@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Sentinel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: radial-gradient(circle at 50% 0%, #0a160a, #040804);
+            color: #fff;
+        }
+        .auth-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .auth-header svg {
+            color: var(--neon-lime, #a8ff3e);
+            margin-bottom: 1rem;
+        }
+        .auth-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 0.05em;
+        }
+        .auth-subtitle {
+            font-size: 0.85rem;
+            color: var(--muted-text, #889988);
+            margin-top: 0.5rem;
+        }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .input-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: var(--muted-text, #889988);
+            text-transform: uppercase;
+        }
+        .auth-input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .auth-input:focus {
+            outline: none;
+            border-color: var(--neon-lime, #a8ff3e);
+            background: rgba(168, 255, 62, 0.05);
+            box-shadow: 0 0 15px rgba(168, 255, 62, 0.15);
+        }
+        .btn-auth {
+            margin-top: 0.5rem;
+            padding: 1rem;
+            background: rgba(168, 255, 62, 0.1);
+            color: var(--neon-lime, #a8ff3e);
+            border: 1px solid var(--neon-lime, #a8ff3e);
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-auth:hover {
+            background: var(--neon-lime, #a8ff3e);
+            color: #040804;
+            box-shadow: 0 0 20px rgba(168, 255, 62, 0.3);
+        }
+        .auth-footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--muted-text, #889988);
+        }
+        .auth-footer a {
+            color: var(--neon-lime, #a8ff3e);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        #auth-error {
+            color: #ff4444;
+            font-size: 0.8rem;
+            text-align: center;
+            min-height: 1.2rem;
+            margin-top: -0.5rem;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card auth-container">
+        <div class="auth-header">
+            <!-- Sentinel Icon -->
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <h1 class="auth-title">SYSTEM LOGIN</h1>
+            <p class="auth-subtitle">Authenticate to access investment pipelines.</p>
+        </div>
+
+        <form id="login-form" class="auth-form" onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <label for="email" class="input-label">Email</label>
+                <input type="email" id="email" class="auth-input" placeholder="operative@sentinel.co" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="password" class="input-label">Password</label>
+                <input type="password" id="password" class="auth-input" placeholder="••••••••" required>
+            </div>
+
+            <div id="auth-error"></div>
+
+            <button type="submit" class="btn-auth">Initialize Session</button>
+        </form>
+
+        <div class="auth-footer">
+            Unregistered operative? <a href="signup.html">Request access</a>
+        </div>
+    </div>
+
+    <!-- Integrate centralized API logic -->
+    <script src="script.js"></script>
+    <script>
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('auth-error');
+            const submitBtn = document.querySelector('.btn-auth');
+            
+            errorEl.innerText = '';
+            submitBtn.innerText = 'AUTHENTICATING...';
+            submitBtn.style.opacity = '0.7';
+
+            try {
+                // Execute API request hitting our FastAPI Auth Route
+                const response = await fetch(`${BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Cache JWT securely in local storage
+                    localStorage.setItem("token", data.access_token);
+                    
+                    submitBtn.innerText = 'ACCESS GRANTED';
+                    submitBtn.style.background = '#a8ff3e';
+                    submitBtn.style.color = '#000';
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 500);
+                } else {
+                    errorEl.innerText = data.detail || 'Authentication rejected.';
+                    submitBtn.innerText = 'INITIALIZE SESSION';
+                    submitBtn.style.opacity = '1';
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                errorEl.innerText = 'Secure protocol failure. Backend unreachable.';
+                submitBtn.innerText = 'INITIALIZE SESSION';
+                submitBtn.style.opacity = '1';
+            }
+        }
+    </script>
+</body>
+</html>
