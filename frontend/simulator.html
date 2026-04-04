@@ -108,22 +108,22 @@
             <div class="simulator-kpi-row">
                 <div class="glass-card kpi-card">
                     <div class="kpi-title">Prob. of Profit</div>
-                    <div class="kpi-value" style="color: var(--neon-lime)">73%</div>
+                    <div class="kpi-value" id="sim-kpi-prob" style="color: var(--neon-lime)">73%</div>
                     <div style="font-size:0.6rem; color: var(--muted-text)">High Confidence</div>
                 </div>
                 <div class="glass-card kpi-card">
                     <div class="kpi-title">Exp. Return</div>
-                    <div class="kpi-value" style="color: #00ffcc">+22.4%</div>
+                    <div class="kpi-value" id="sim-kpi-return" style="color: #00ffcc">+22.4%</div>
                     <div style="font-size:0.6rem; color: var(--muted-text)">↑ Annualized</div>
                 </div>
                 <div class="glass-card kpi-card">
                     <div class="kpi-title">Worst Case</div>
-                    <div class="kpi-value" style="color: #ff4444">-18.7%</div>
+                    <div class="kpi-value" id="sim-kpi-worst" style="color: #ff4444">-18.7%</div>
                     <div style="font-size:0.6rem; color: var(--muted-text)">↓ 95% Confidence</div>
                 </div>
                 <div class="glass-card kpi-card">
                     <div class="kpi-title">Best Case</div>
-                    <div class="kpi-value" style="color: #ffd200">+61.2%</div>
+                    <div class="kpi-value" id="sim-kpi-best" style="color: #ffd200">+61.2%</div>
                     <div style="font-size:0.6rem; color: var(--muted-text)">★ Bull Target</div>
                 </div>
             </div>
@@ -141,7 +141,7 @@
                 <div class="risk-item">
                     <div class="indicator-label">
                         <span>SHARPE RATIO</span>
-                        <span style="color:var(--neon-lime)">2.14</span>
+                        <span id="sim-risk-sharpe" style="color:var(--neon-lime)">2.14</span>
                     </div>
                     <div class="indicator-bar">
                         <div class="indicator-fill" style="width: 75%"></div>
@@ -151,7 +151,7 @@
                 <div class="risk-item">
                     <div class="indicator-label">
                         <span>SORTINO RATIO</span>
-                        <span style="color:var(--neon-lime)">2.88</span>
+                        <span id="sim-risk-sortino" style="color:var(--neon-lime)">2.88</span>
                     </div>
                     <div class="indicator-bar">
                         <div class="indicator-fill" style="width: 85%"></div>
@@ -161,7 +161,7 @@
                 <div class="risk-item">
                     <div class="indicator-label">
                         <span>BETA (MARKET)</span>
-                        <span style="color:#00ffcc">1.12</span>
+                        <span id="sim-risk-beta" style="color:#00ffcc">1.12</span>
                     </div>
                     <div class="indicator-bar">
                         <div class="indicator-fill" style="width: 55%; background: #00ffcc"></div>
@@ -171,7 +171,7 @@
                 <div class="risk-item">
                     <div class="indicator-label">
                         <span>VAR (VALUE AT RISK)</span>
-                        <span style="color:#ff4444">4.2%</span>
+                        <span id="sim-risk-var" style="color:#ff4444">4.2%</span>
                     </div>
                     <div class="indicator-bar">
                         <div class="indicator-fill" style="width: 40%; background: #ff4444"></div>
@@ -350,14 +350,58 @@
                 });
             };
 
-            runBtn.addEventListener('click', () => {
+            runBtn.addEventListener('click', async () => {
                 // Flash effect on button
                 runBtn.style.transform = 'scale(0.95)';
                 setTimeout(() => { runBtn.style.transform = 'scale(1)'; }, 100);
                 generatePaths();
+
+                // Dynamic simulation via API
+                try {
+                    const budget = parseFloat(amountSlider.value);
+                    const apiUrl = typeof BASE_URL !== 'undefined' ? BASE_URL : 'http://127.0.0.1:8000';
+                    const token = localStorage.getItem("token");
+                    
+                    const res = await fetch(`${apiUrl}/simulate`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { "Authorization": "Bearer " + token } : {})
+                        },
+                        body: JSON.stringify({ parameters: { budget } })
+                    });
+                    
+                    if (res.ok) {
+                        const data = await res.json();
+                        
+                        // KPIs
+                        const probProfit = 100 - (data.drawdown_probability * 100);
+                        document.getElementById('sim-kpi-prob').innerText = probProfit.toFixed(1) + '%';
+                        document.getElementById('sim-kpi-prob').style.color = probProfit > 50 ? 'var(--neon-lime)' : '#ff4444';
+
+                        const expRet = data.estimated_return_pct;
+                        document.getElementById('sim-kpi-return').innerText = (expRet >= 0 ? '+' : '') + expRet.toFixed(1) + '%';
+                        document.getElementById('sim-kpi-return').style.color = expRet >= 0 ? '#00ffcc' : '#ff4444';
+
+                        const worstPct = (data.value_at_risk_95 / budget) * 100;
+                        document.getElementById('sim-kpi-worst').innerText = '-' + worstPct.toFixed(1) + '%';
+                        
+                        const bestPct = expRet + (worstPct * 1.5); // Approx from normal distribution
+                        document.getElementById('sim-kpi-best').innerText = '+' + bestPct.toFixed(1) + '%';
+                        
+                        // Risk Stack
+                        document.getElementById('sim-risk-sharpe').innerText = data.sharpe_ratio.toFixed(2);
+                        document.getElementById('sim-risk-sortino').innerText = data.sortino_ratio.toFixed(2);
+                        document.getElementById('sim-risk-beta').innerText = data.beta.toFixed(2);
+                        document.getElementById('sim-risk-var').innerText = worstPct.toFixed(1) + '%';
+                    }
+                } catch(err) {
+                    console.error("Simulation API Error:", err);
+                }
             });
 
-            generatePaths(); // Auto-run on load
+            // Initial fetch to load actual data instead of hardcoded DOM defaults
+            runBtn.click();
         });
     </script>
     <style>
