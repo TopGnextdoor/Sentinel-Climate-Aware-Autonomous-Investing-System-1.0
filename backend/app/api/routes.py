@@ -17,6 +17,7 @@ from app.agents.simulation import simulate_scenario
 from app.agents.guard import validate_intent
 from app.agents.trader import execute_trade
 from app.agents.explain import generate_explanation
+from app.agents.execution import run_execution
 
 # Security & Dependency Injection
 from fastapi import Depends
@@ -48,18 +49,19 @@ def health_check():
 def analyze(request: AnalyzeRequest, current_user: str = Depends(get_current_user)) -> Dict[str, Any]:
     """Run the entire autonomous investing orchestration pipeline."""
     try:
-        logger.info(f"Triggering Dynamic Orchestrator for budget: {request.budget}")
+        logger.info(f"Triggering Dynamic Orchestrator for user={current_user} budget={request.budget}")
         input_data = {
-            "budget": request.budget,
-            "risk_level": request.risk_level,
-            "max_trade": request.max_trade,
-            "avoid_sectors": request.avoid_sectors
+            "budget":         request.budget,
+            "risk_level":     request.risk_level,
+            "max_trade":      request.max_trade,
+            "avoid_sectors":  request.avoid_sectors,
         }
-        result = orchestrate(input_data)
+        result = orchestrate(input_data, user_id=current_user)
         return result
     except Exception as e:
         logger.error(f"Error analyzing pipeline: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/portfolio")
 def portfolio(request: PortfolioRequest, current_user: str = Depends(get_current_user)) -> Dict[str, Any]:
@@ -131,9 +133,9 @@ def get_policies() -> Dict[str, Any]:
         logger.error(f"Error fetching policies: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/execute-trade")
+@router.post("/legacy-alpaca-trade")
 def execute_trade_endpoint(request: ExecuteTradeRequest, current_user: str = Depends(get_current_user)) -> Dict[str, Any]:
-    """Force an execution directly to Alpaca paper systems."""
+    """Force an execution directly to Alpaca paper systems (legacy)."""
     try:
         logger.info("Triggering Trading Agent manually")
         return execute_trade(request.trade)
@@ -263,3 +265,149 @@ def login(user_data: UserLogin):
         
     access_token = create_access_token({"sub": user.id, "email": user.email, "username": user.username, "role": user.role})
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+# ── VIRTUAL PORTFOLIO ──────────────────────────────────────────
+from app.services.portfolio_service import (
+    initialize_portfolio,
+    get_portfolio_for_user,
+    update_portfolio_after_trade,
+    get_trade_history,
+    get_portfolio_value,
+    get_performance_summary,
+)
+
+from pydantic import BaseModel as PydanticBaseModel
+
+class TradeRequest(PydanticBaseModel):
+    stock: str
+    quantity: float
+    action: str  # "BUY" | "SELL"
+
+
+@router.get("/portfolio")
+def portfolio_get(current_user: str = Depends(get_current_user)):
+    """Return the authenticated user's portfolio summary."""
+    return get_portfolio_for_user(current_user)
+
+
+@router.post("/portfolio/init")
+def portfolio_init(current_user: str = Depends(get_current_user)):
+    """
+    Provision a fresh $100k paper portfolio for the user.
+    Safe to call multiple times — idempotent.
+    """
+    return initialize_portfolio(current_user)
+
+
+@router.post("/portfolio/trade")
+def portfolio_trade(trade: TradeRequest, current_user: str = Depends(get_current_user)):
+    """
+    Execute a paper BUY or SELL trade via the portfolio service layer.
+
+    Body: { "stock": "AAPL", "quantity": 10, "action": "BUY" }
+    """
+    try:
+        result = update_portfolio_after_trade(current_user, trade.model_dump())
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/portfolio/history")
+def portfolio_history(current_user: str = Depends(get_current_user)):
+    """Return the full trade history for the authenticated user (newest first)."""
+    return {"trades": get_trade_history(current_user)}
+
+
+@router.get("/portfolio/value")
+def portfolio_value(current_user: str = Depends(get_current_user)):
+    """
+    Return live portfolio valuation — cash + current market value of all holdings,
+    with per-holding P&L breakdown.
+    """
+    return get_portfolio_value(current_user)
+
+
+@router.get("/portfolio/performance")
+def portfolio_performance(current_user: str = Depends(get_current_user)):
+    """
+    Full performance snapshot for the authenticated user.
+
+    Returns:
+      - **total_value**    : cash + live market value of all holdings
+      - **cash**           : available paper cash
+      - **holdings_value** : current market value of open positions
+      - **overall_pnl**    : unrealized gain/loss vs cost basis
+      - **overall_pnl_pct**: percentage unrealized return
+      - **holdings**       : per-ticker breakdown with P&L
+      - **best_performer** / **worst_performer**: top & bottom ticker by P&L %
+      - **trade_count**, **win_rate_pct**: activity stats
+    """
+    return get_performance_summary(current_user)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  EXECUTION ENGINE  —  POST /execute
+# ─────────────────────────────────────────────────────────────────────────────
+
+from pydantic import BaseModel as _Base
+
+class ExecuteRequest(_Base):
+    ticker:   str
+    action:   str    # "BUY" | "SELL"
+    quantity: float
+    price_override: float | None = None   # optional — skips live fetch
+
+
+@router.post("/execute")
+@router.post("/execute-trade")
+def execute_endpoint(
+    req: ExecuteRequest,
+    current_user: str = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """
+    Simulate a paper trade through the Execution Agent.
+
+    - Fetches real-time price via yfinance (or uses price_override).
+    - Validates cash (BUY) or share availability (SELL).
+    - Updates the user's virtual portfolio.
+
+    **Request body**
+    ```json
+    { "ticker": "AAPL", "action": "BUY", "quantity": 10 }
+    ```
+
+    **Response**
+    ```json
+    {
+      "status": "EXECUTED",
+      "ticker": "AAPL",
+      "action": "BUY",
+      "quantity": 10,
+      "price": 190.23,
+      "total_cost": 1902.30,
+      "trade_id": "<uuid>",
+      "timestamp": "<iso8601>",
+      "portfolio": { ... }
+    }
+    ```
+    """
+    try:
+        logger.info(
+            f"[ExecutionAgent] user={current_user} "
+            f"{req.action} {req.quantity}×{req.ticker.upper()}"
+        )
+        return run_execution(
+            user_id=current_user,
+            ticker=req.ticker,
+            action=req.action,
+            quantity=req.quantity,
+            price_override=req.price_override,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"[ExecutionAgent] Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

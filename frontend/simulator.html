@@ -196,6 +196,73 @@
         </div>
     </main>
 
+    <!-- PAPER TRADING PANEL -->
+    <section style="padding: 0 4rem 4rem 4rem; display: flex; flex-direction: column; gap: 1.5rem;">
+        <h2 style="font-size: 1.4rem; font-weight: 800; letter-spacing: 1px;">Paper Trading <span style="color:var(--neon-lime)">— Live Portfolio</span></h2>
+        
+        <p style="font-size: 0.9rem; color: var(--muted-text); line-height: 1.6; font-family: 'JetBrains Mono', monospace; border-left: 2px solid var(--neon-lime); padding-left: 1rem; margin-bottom: 1rem;">
+            <strong style="color:#ff4444; letter-spacing:1px;">WARNING: You are operating within the Sentinel Alpha-Environment.</strong><br>
+            This is a high-stakes, hyper-realistic market sandbox. Our orchestration engine utilizes absolute zero-latency market shadowing, pulling live OHLCV ticks via synthetic data feeds to perfectly emulate real-world slippage, order-book depth dynamics, and sudden liquidity shocks under strict climate-transition pressure. Treat this simulated capital as strictly as institutional liquidity.<br><br>
+            
+            <strong style="color:var(--neon-lime);">CORE UTILIZATION PROTOCOLS:</strong><br>
+            <span style="color:#00ffcc;">[1] Strategy Validation:</span> Prove absolute alpha generation capability against unpredictable, live market volatility prior to deploying live institutional funds.<br>
+            <span style="color:#00ffcc;">[2] Algorithmic Stress Testing:</span> Expose your dynamic portfolio allocations to hyper-realistic transition risk shocks and immediate regulatory constraint enforcements.<br>
+            <span style="color:#00ffcc;">[3] Edge Execution Training:</span> Refine multi-leg entries and surgical exits while the Sentinel macro-orchestrator persistently interrogates your decision-making efficacy.<br><br>
+            
+            <span style="color:#ffcc00; font-weight:700;">» All executions committed within this terminal are immutably logged to the shadow ledger. Your performance directly trains the master autonomous agent.</span>
+        </p>
+
+        <div style="display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem;">
+
+            <!-- Trade Execution Form -->
+            <div class="glass-card rounded-2xl sidebar-panel">
+                <h3 class="panel-title">Execute Paper Trade</h3>
+
+                <div class="tool-input-group">
+                    <label class="label">TICKER</label>
+                    <input type="text" class="neon-input" id="pt-ticker" placeholder="e.g. AAPL" value="AAPL">
+                </div>
+                <div class="tool-input-group">
+                    <label class="label">QUANTITY (SHARES)</label>
+                    <input type="number" class="neon-input" id="pt-qty" value="10" min="1">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-top:0.5rem;">
+                    <button id="btn-buy" style="padding:12px; background:rgba(0,255,136,0.1); border:1px solid #00ff88; color:#00ff88; border-radius:10px; font-weight:800; cursor:pointer; transition:0.3s; font-size:0.85rem; letter-spacing:1px;" onmouseover="this.style.background='rgba(0,255,136,0.2)'" onmouseout="this.style.background='rgba(0,255,136,0.1)'">▲ BUY</button>
+                    <button id="btn-sell" style="padding:12px; background:rgba(255,68,68,0.1); border:1px solid #ff4444; color:#ff4444; border-radius:10px; font-weight:800; cursor:pointer; transition:0.3s; font-size:0.85rem; letter-spacing:1px;" onmouseover="this.style.background='rgba(255,68,68,0.2)'" onmouseout="this.style.background='rgba(255,68,68,0.1)'">▼ SELL</button>
+                </div>
+                <div id="pt-status" style="margin-top:1rem; font-size:0.78rem; font-family:'JetBrains Mono',monospace; color:var(--muted-text); min-height:1.5rem;"></div>
+            </div>
+
+            <!-- Portfolio Value Summary + Holdings -->
+            <div class="glass-card rounded-2xl" style="padding:1.5rem; display:flex; flex-direction:column; gap:1.5rem;">
+
+                <!-- Headline numbers -->
+                <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem;">
+                    <div>
+                        <div style="font-size:0.65rem; color:var(--muted-text); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Cash Balance</div>
+                        <div id="pt-cash" style="font-size:1.5rem; font-weight:800; color:var(--neon-lime); font-family:'JetBrains Mono',monospace;">—</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.65rem; color:var(--muted-text); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Holdings Value</div>
+                        <div id="pt-holdings-val" style="font-size:1.5rem; font-weight:800; color:#00ffcc; font-family:'JetBrains Mono',monospace;">—</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.65rem; color:var(--muted-text); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Total Portfolio</div>
+                        <div id="pt-total" style="font-size:1.5rem; font-weight:800; color:#fff; font-family:'JetBrains Mono',monospace;">—</div>
+                    </div>
+                </div>
+
+                <!-- Holdings Table -->
+                <div>
+                    <div style="font-size:0.65rem; color:var(--muted-text); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Current Holdings</div>
+                    <div id="pt-holdings-table" style="font-size:0.8rem; font-family:'JetBrains Mono',monospace;">
+                        <div style="color:var(--muted-text); font-size:0.75rem;">No holdings yet. Execute your first trade.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <script src="script.js"></script>
     <script>
         // Inline simulator logic for the paths

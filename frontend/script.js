@@ -3,8 +3,8 @@
 // ============================================================
 
 // Automatically adapt to localhost or cloud (e.g., Render) deployments
-const BASE_URL = window.location.origin.includes('5500') || window.location.origin.includes('3000') 
-    ? 'http://127.0.0.1:8000' 
+const BASE_URL = window.location.origin.includes('5500') || window.location.origin.includes('3000')
+    ? 'http://127.0.0.1:8000'
     : '';
 
 // ─────────────────────────────────────────
@@ -14,7 +14,7 @@ const BASE_URL = window.location.origin.includes('5500') || window.location.orig
     const path = window.location.pathname;
     const isPublicPage = path.includes('login.html') || path.includes('signup.html') || path.endsWith('/') || path.includes('index.html');
     const token = localStorage.getItem('token');
-    
+
     if (!token && !isPublicPage) {
         window.location.href = 'login.html';
     }
@@ -31,33 +31,33 @@ function loadIdentity() {
     try {
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(function(c) {
+        const payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(function (c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join('')));
-        
+
         const username = payload.username || payload.email.split('@')[0];
         const role = payload.role || 'Institutional Sentinel';
         const uuid = (payload.sub || '89A4').split('-')[0].toUpperCase();
-        
+
         const avatarEl = document.getElementById('hero-avatar');
         const welcomeEl = document.getElementById('hero-welcome');
         const tierEl = document.getElementById('hero-account-tier');
-        
+
         if (welcomeEl) {
             // Treat username as clean string instead of deriving from email
             const cleanName = username.split('.').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
             welcomeEl.innerText = `Welcome back, ${cleanName}`;
-            
+
             if (avatarEl) {
                 const initials = cleanName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                 avatarEl.innerText = initials;
             }
-            
+
             if (tierEl) {
                 tierEl.innerHTML = `Account ID: SNTL-${uuid}  •  Tier: ${role}`;
             }
         }
-        
+
     } catch (e) {
         console.error("Failed to decode token identity:", e);
     }
@@ -69,16 +69,16 @@ document.addEventListener('DOMContentLoaded', loadIdentity);
 //  REAL STOCK PRICES (reference data)
 // ─────────────────────────────────────────
 const STOCK_PRICES = {
-    AAPL:  189.23,
-    MSFT:  402.11,
+    AAPL: 189.23,
+    MSFT: 402.11,
     GOOGL: 175.98,
-    AMZN:  198.45,
-    TSLA:  172.63,
-    NVDA:  875.40,
-    META:  513.27,
-    BRK:   412.50,
-    JPM:   202.18,
-    V:     279.55,
+    AMZN: 198.45,
+    TSLA: 172.63,
+    NVDA: 875.40,
+    META: 513.27,
+    BRK: 412.50,
+    JPM: 202.18,
+    V: 279.55,
 };
 
 // ─────────────────────────────────────────
@@ -88,7 +88,7 @@ const STOCK_PRICES = {
 async function apiFetch(path, method = 'GET', body = null) {
     const opts = {
         method,
-        headers: { 
+        headers: {
             'Content-Type': 'application/json',
             "Authorization": "Bearer " + localStorage.getItem("token")
         },
@@ -119,13 +119,21 @@ async function runAnalysis(data) {
         throw err;
     }
 }
-async function getPortfolio(data)  { return apiFetch('/portfolio', 'POST', data); }
-async function runSimulation(data) { return apiFetch('/simulate', 'POST', data); }
-async function getClimateScores()  { return apiFetch('/climate-scores', 'GET'); }
-async function validateTrade(data) { return apiFetch('/validate-trade', 'POST', data); }
-async function executeTrade(data)  { return apiFetch('/execute-trade', 'POST', data); }
-async function getPolicies()       { return apiFetch('/policies', 'GET'); }
-async function getExplanation(data){ return apiFetch('/explain', 'POST', data); }
+// Portfolio API
+async function portfolioGet()          { return apiFetch('/portfolio',             'GET');  }
+async function portfolioInit()          { return apiFetch('/portfolio/init',         'POST'); }
+async function portfolioTrade(data)     { return apiFetch('/portfolio/trade',        'POST', data); }
+async function portfolioValue()         { return apiFetch('/portfolio/value',        'GET');  }
+async function portfolioHistory()       { return apiFetch('/portfolio/history',      'GET');  }
+async function portfolioPerformance()   { return apiFetch('/portfolio/performance',  'GET');  }
+async function executeViaAgent(data)    { return apiFetch('/execute',               'POST', data); }
+// Other APIs
+async function runSimulation(data)  { return apiFetch('/simulate',       'POST', data); }
+async function getClimateScores()   { return apiFetch('/climate-scores', 'GET');  }
+async function validateTrade(data)  { return apiFetch('/validate-trade', 'POST', data); }
+async function executeTrade(data)   { return apiFetch('/execute-trade',  'POST', data); }
+async function getPolicies()        { return apiFetch('/policies',       'GET');  }
+async function getExplanation(data) { return apiFetch('/explain',        'POST', data); }
 
 // ─────────────────────────────────────────
 //  SHARED UI HELPERS
@@ -146,17 +154,17 @@ function showError(container, message) {
     container.innerHTML = `
         <div style="padding:1.5rem;border:1px solid rgba(255,68,68,0.4);border-radius:12px;background:rgba(255,68,68,0.07);color:#ff6666;font-family:'JetBrains Mono',monospace;font-size:0.82rem;">
             ⚠️ ${message === 'BACKEND_UNREACHABLE'
-                ? 'Backend not reachable. Make sure the Sentinel API is running on <b>http://127.0.0.1:8000</b>'
-                : `Error: ${message}`}
+            ? 'Backend not reachable. Make sure the Sentinel API is running on <b>http://127.0.0.1:8000</b>'
+            : `Error: ${message}`}
         </div>`;
 }
 
 function guardBadge(status) {
     const map = {
         APPROVED: { color: '#00ff88', icon: '🛡️', bg: 'rgba(0,255,136,0.1)', border: 'rgba(0,255,136,0.3)' },
-        BLOCKED:  { color: '#ff4444', icon: '🚫', bg: 'rgba(255,68,68,0.1)',  border: 'rgba(255,68,68,0.3)' },
+        BLOCKED: { color: '#ff4444', icon: '🚫', bg: 'rgba(255,68,68,0.1)', border: 'rgba(255,68,68,0.3)' },
         MODIFIED: { color: '#ffcc00', icon: '⚠️', bg: 'rgba(255,204,0,0.1)', border: 'rgba(255,204,0,0.3)' },
-        SKIPPED:  { color: '#888',    icon: '⏭️', bg: 'rgba(136,136,136,0.1)', border: 'rgba(136,136,136,0.2)' },
+        SKIPPED: { color: '#888', icon: '⏭️', bg: 'rgba(136,136,136,0.1)', border: 'rgba(136,136,136,0.2)' },
     };
     const s = map[status] || map.SKIPPED;
     return `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;background:${s.bg};border:1px solid ${s.border};color:${s.color};font-weight:700;font-size:0.8rem;">${s.icon} ${status}</span>`;
@@ -182,12 +190,66 @@ function initDashboard() {
 
     // Budget slider display
     const budgetSlider = document.querySelector('#budget-slider');
-    const portfolioValue = document.querySelector('.portfolio-info h2');
-    if (budgetSlider && portfolioValue) {
+    const budgetDisplay = document.querySelector('.budget-display-value'); // if exists
+    if (budgetSlider && budgetDisplay) {
         budgetSlider.addEventListener('input', (e) => {
-            portfolioValue.innerText = formatCurrency(e.target.value);
+            budgetDisplay.innerText = formatCurrency(e.target.value);
         });
     }
+
+    // Portfolio Fetch
+    async function loadDashboardPortfolio() {
+        try {
+            const data = await portfolioValue(); // Calls GET /portfolio/value
+            const totalValEl = document.getElementById('dash-port-total');
+            const cashEl = document.getElementById('dash-port-cash');
+            const holdingsListEl = document.getElementById('dash-holdings-list');
+            const pnlEl = document.getElementById('dash-port-pnl');
+
+            if (!totalValEl || !cashEl || !holdingsListEl) return;
+
+            // Total Value and PnL
+            totalValEl.innerText = formatCurrency(data.total_value);
+            cashEl.innerText = formatCurrency(data.cash);
+
+            if (pnlEl && data.profit_loss !== undefined) {
+                pnlEl.style.display = 'inline-block';
+                const isProfit = data.profit_loss >= 0;
+                
+                // Construct standard UI badge dynamically
+                pnlEl.style.padding = '4px 10px';
+                pnlEl.style.borderRadius = '20px';
+                pnlEl.style.fontSize = '0.75rem';
+                pnlEl.style.fontWeight = '700';
+                pnlEl.style.border = isProfit ? '1px solid rgba(0,255,136,0.3)' : '1px solid rgba(255,68,68,0.3)';
+                pnlEl.style.background = isProfit ? 'rgba(0,255,136,0.1)' : 'rgba(255,68,68,0.1)';
+                pnlEl.style.color = isProfit ? '#00ff88' : '#ff4444';
+                
+                pnlEl.innerText = (isProfit ? '+' : '') + formatCurrency(data.profit_loss);
+            }
+
+            const holdings = data.holdings || [];
+            if (holdings.length === 0) {
+                holdingsListEl.innerHTML = '<div style="font-size:0.75rem; color:var(--muted-text); padding:10px 0;">No active holdings.</div>';
+            } else {
+                holdingsListEl.innerHTML = holdings.map(h => {
+                    return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                            <div style="display:flex; align-items:center; gap:8px">
+                                <div style="width:10px; height:10px; border-radius:3px; background:var(--neon-lime);"></div>
+                                <span style="font-size:0.8rem; font-weight:700;">${h.ticker}</span>
+                                <span style="font-size:0.7rem; color:var(--muted-text)">${h.quantity} shrs</span>
+                            </div>
+                            <div style="font-size:0.8rem; font-family:'JetBrains Mono',monospace;">${formatCurrency(h.market_value)}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        } catch (e) {
+            console.error("Dashboard Portfolio load failed:", e);
+        }
+    }
+    loadDashboardPortfolio();
 
     // Chip toggle
     const chips = document.querySelectorAll('.chip');
@@ -198,6 +260,48 @@ function initDashboard() {
     if (gaugeProgress) {
         // Initial state is blanked via CSS inline style in HTML.
         // It will spring to life inside renderDashboardResults().
+    }
+
+    // QUICK EXECUTION (Execute Trade Button)
+    const execBtn = document.getElementById('execute-trade-btn');
+    if (execBtn) {
+        execBtn.addEventListener('click', async () => {
+            const ticker = document.getElementById('qt-ticker')?.value.trim().toUpperCase();
+            const qty = parseFloat(document.getElementById('qt-qty')?.value);
+            const action = document.getElementById('qt-action')?.value;
+            const resEl = document.getElementById('qt-result');
+
+            if (!ticker || isNaN(qty) || qty <= 0) {
+                resEl.style.color = '#ffcc00';
+                resEl.innerText = '⚠ Enter a valid ticker and quantity';
+                return;
+            }
+
+            execBtn.disabled = true;
+            execBtn.style.opacity = '0.6';
+            resEl.style.color = 'var(--muted-text)';
+            resEl.innerText = `⏳ Executing ${action} ${qty}x ${ticker}...`;
+
+            try {
+                // Ensure portfolio initialized for new users
+                try { await portfolioInit(); } catch(e){}
+
+                // Hits POST /execute-trade through script.js mapped APIs
+                const response = await executeTrade({ ticker, action, quantity: qty });
+
+                resEl.style.color = action === 'BUY' ? '#00ff88' : '#00d2ff';
+                resEl.innerHTML = `✓ ${action} <b>${response.ticker}</b> @ ${formatCurrency(response.price)}<br>Total: ${formatCurrency(response.total_cost)}`;
+                
+                // Refresh dashboard portfolio UI implicitly
+                loadDashboardPortfolio();
+            } catch (err) {
+                resEl.style.color = '#ff4444';
+                resEl.innerText = `✗ Failed: ${err.message || 'Error occurred'}`;
+            } finally {
+                execBtn.disabled = false;
+                execBtn.style.opacity = '1';
+            }
+        });
     }
 
     // RUN ANALYSIS BUTTON
@@ -277,7 +381,7 @@ function renderDashboardResults(container, data) {
     const p = data.portfolio || {};
     const g = data.guard || {};
     const t = data.trade || {};
-    const ex = data.execution || {};
+    const ex = data.execution_result || {};
     const c_data = data.climate_data || {};
     const explanation = data.explanation || 'No explanation available.';
     const guardStatus = g.status || 'UNKNOWN';
@@ -356,20 +460,23 @@ function renderDashboardResults(container, data) {
     if (execStatusEl) {
         const now = new Date();
         const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        
+
         let execStatus = ex.status || 'PENDING';
-        if (!ex.status && guardStatus === 'BLOCKED') {
-            execStatus = 'BLOCKED_BY_GUARD';
-        }
-        
-        const orderInfo = ex.order_id ? ` | Order: ${ex.order_id}` : '';
-        const color = execStatus === 'EXECUTED_SIMULATED' ? 'var(--neon-lime)' 
-            : execStatus === 'EXECUTED_LIVE_PAPER' ? '#00d2ff' 
-            : execStatus.includes('BLOCK') ? '#ff4444' 
-            : '#ffcc00';
-            
+        if (!ex.status && guardStatus === 'BLOCKED') execStatus = 'BLOCKED_BY_GUARD';
+
+        const color =
+            execStatus === 'EXECUTED'         ? '#00ff88'
+          : execStatus === 'SKIPPED'          ? '#ffcc00'
+          : execStatus === 'REJECTED'         ? '#ff4444'
+          : execStatus.includes('BLOCK')      ? '#ff4444'
+          : '#888';
+
+        const detail = execStatus === 'EXECUTED'
+            ? ` | ${ex.ticker} × ${ex.quantity} @ $${ex.price}  |  Total: $${(ex.total_cost || 0).toLocaleString()}`
+            : ex.reason ? ` — ${ex.reason}` : '';
+
         execStatusEl.style.color = color;
-        execStatusEl.innerHTML = `STATUS: ${execStatus} ${timeStr} EST${orderInfo}`;
+        execStatusEl.innerHTML = `STATUS: ${execStatus} ${timeStr} EST${detail}`;
 
         const modeLabel = document.getElementById('alpaca-mode-label');
         if (modeLabel) {
@@ -387,7 +494,7 @@ function renderDashboardResults(container, data) {
             let color = '#ffcc00'; // Skipping yellow
             if (step.status === 'completed' || step.status === 'executed') color = '#00ff88'; // Green
             if (step.status === 'blocked') color = '#ff4444'; // Red
-            
+
             traceHtml += `
                 <div style="font-family:'JetBrains Mono', monospace; font-size:0.85rem; margin-bottom:6px;">
                     <span style="color:var(--muted-text)">Step ${i + 1}: ${agentName} &rarr; </span>
@@ -621,12 +728,25 @@ function renderPipelineResults(container, data) {
         },
         {
             label: '⚡ Execution',
-            key: 'execution',
-            render: d => `
-                <div>${guardBadge(d.status)}</div>
-                <div style="font-size:0.78rem;color:var(--muted-text);margin-top:8px;">${d.message || ''}</div>
-                ${d.order_id ? `<div style="font-size:0.78rem;color:var(--neon-lime);">Order: ${d.order_id}</div>` : ''}
-            `
+            key: 'execution_result',
+            render: d => {
+                if (d.status === 'EXECUTED') {
+                    return `
+                        <div>${guardBadge('APPROVED')}</div>
+                        <div style="font-size:0.78rem;margin-top:8px;display:grid;gap:4px;">
+                            <div>Ticker: <b style="color:#fff">${d.ticker}</b></div>
+                            <div>Qty: <b style="color:#fff">${d.quantity} shares @ $${d.price}</b></div>
+                            <div>Total: <b style="color:var(--neon-lime)">${formatCurrency(d.total_cost)}</b></div>
+                            <div style="color:var(--muted-text);font-size:0.72rem">Trade ID: ${d.trade_id || '—'}</div>
+                        </div>`;
+                }
+                const badge = d.status === 'REJECTED'
+                    ? guardBadge('BLOCKED')
+                    : `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;background:rgba(255,204,0,0.1);border:1px solid rgba(255,204,0,0.3);color:#ffcc00;font-weight:700;font-size:0.8rem;">⏭️ ${d.status}</span>`;
+                return `
+                    <div>${badge}</div>
+                    <div style="font-size:0.78rem;color:var(--muted-text);margin-top:8px;">${d.reason || ''}</div>`;
+            }
         },
         {
             label: '🧠 Explanation',
@@ -643,10 +763,10 @@ function renderPipelineResults(container, data) {
             let color = '#00ff88';
             if (step.status === 'blocked') { icon = '❌'; color = '#ff4444'; }
             else if (step.status === 'skipped') { icon = '⏭'; color = '#ffcc00'; }
-            
+
             const capAgent = step.agent.charAt(0).toUpperCase() + step.agent.slice(1);
             const capStatus = step.status.charAt(0).toUpperCase() + step.status.slice(1);
-            
+
             flowHtml += `
                 <div style="background:rgba(0,0,0,0.4); border:1px solid ${color}40; border-radius:8px; padding:10px 16px; font-family:'JetBrains Mono', monospace; font-size:0.8rem; color:#fff; display:flex; flex-direction:column; align-items:center; min-width:110px;">
                     <span style="font-weight:700; margin-bottom:6px;">[ ${capAgent} ]</span>
@@ -766,7 +886,7 @@ function renderPipelineResults(container, data) {
 
     const pipeAllocation = document.getElementById('pipe-allocation-card');
     if (pipeAllocation) {
-        const holdingsText = (p.holdings || []).map(h => `${h.ticker}: ${(h.weight*100).toFixed(0)}%`).join(' | ');
+        const holdingsText = (p.holdings || []).map(h => `${h.ticker}: ${(h.weight * 100).toFixed(0)}%`).join(' | ');
         pipeAllocation.innerHTML = `
              <h4 class="panel-title" style="font-size: 0.8rem">Allocation Weight</h4>
              <div class="donut-container" style="width:140px; height:140px; margin: 0 auto;">
@@ -998,12 +1118,12 @@ function renderSimulationResults(container, data, budget) {
 function initGuard() {
     const btnValidate = document.getElementById('btn-validate');
     const resultApproved = document.getElementById('result-approved');
-    const resultBlocked  = document.getElementById('result-blocked');
+    const resultBlocked = document.getElementById('result-blocked');
     const resultModified = document.getElementById('result-modified');
-    const terminalLog    = document.getElementById('terminal-log');
-    const tickerInput    = document.getElementById('test-ticker');
-    const qtyInput       = document.getElementById('test-qty');
-    const sectorInput    = document.getElementById('test-sector');
+    const terminalLog = document.getElementById('terminal-log');
+    const tickerInput = document.getElementById('test-ticker');
+    const qtyInput = document.getElementById('test-qty');
+    const sectorInput = document.getElementById('test-sector');
 
     if (!btnValidate) return;
 
@@ -1036,12 +1156,12 @@ function initGuard() {
         btnValidate.style.transform = 'scale(0.95)';
         setTimeout(() => { btnValidate.style.transform = ''; }, 100);
 
-        const ticker    = (tickerInput?.value || 'AAPL').toUpperCase();
-        const qty       = parseInt(qtyInput?.value || 10);
-        const sector    = sectorInput?.value || 'Technology';
+        const ticker = (tickerInput?.value || 'AAPL').toUpperCase();
+        const qty = parseInt(qtyInput?.value || 10);
+        const sector = sectorInput?.value || 'Technology';
         const avoidSectors = document.getElementById('avoid-sectors-input')?.value
             ?.split(',').map(s => s.trim()).filter(Boolean) || [];
-        const maxTrade  = parseFloat(document.getElementById('max-trade-guard')?.value || 50000);
+        const maxTrade = parseFloat(document.getElementById('max-trade-guard')?.value || 50000);
 
         addLogEntry('PENDING', `Validating ${ticker} × ${qty} shares...`, 'log-info-text');
         btnValidate.disabled = true;
@@ -1084,9 +1204,9 @@ function initGuard() {
 async function loadPolicies() {
     const parentContainer = document.getElementById('policies-container');
     // For backwards compatibility, if someone has old json-block
-    const targetEl = parentContainer || document.querySelector('.json-block'); 
+    const targetEl = parentContainer || document.querySelector('.json-block');
     if (!targetEl) return;
-    
+
     try {
         const data = await getPolicies();
         const policies = data.active_policies || [];
@@ -1100,7 +1220,7 @@ async function loadPolicies() {
             </div>`
         ).join('');
     } catch (err) {
-        if(targetEl) targetEl.innerHTML = `<div style="font-size: 0.8rem; color: #ff4444; padding: 1rem; text-align: center;">Failed to load policies. API Offline.</div>`;
+        if (targetEl) targetEl.innerHTML = `<div style="font-size: 0.8rem; color: #ff4444; padding: 1rem; text-align: center;">Failed to load policies. API Offline.</div>`;
     }
 }
 
@@ -1132,7 +1252,7 @@ async function loadClimateInsights(container) {
 
 function renderClimateInsights(container, data) {
     const assets = data.eligible_assets || [];
-    const score  = data.green_score || 0;
+    const score = data.green_score || 0;
     const color = score >= 80 ? '#00ff88' : score >= 60 ? '#a8ff3e' : score >= 40 ? '#ffcc00' : '#ff4444';
 
     const rows = assets.map(a => {
@@ -1182,14 +1302,14 @@ function renderClimateInsights(container, data) {
 async function initInsights() {
     const btnRefresh = document.getElementById('refresh-climate-btn');
     if (!btnRefresh) return;
-    
+
     // UI elements
     const cEsgTbody = document.getElementById('insights-esg-tbody');
     const cSector = document.getElementById('insights-sector-container');
     const cHeatmap = document.getElementById('insights-heatmap-container');
     const cAlerts = document.getElementById('insights-alerts-container');
     const cScatter = document.getElementById('insights-scatter-dots');
-    
+
     const gaugeScore = document.getElementById('gauge-score');
     const gaugeLabel = document.getElementById('gauge-label');
     const gaugeCircle = document.getElementById('gauge-circle');
@@ -1199,17 +1319,17 @@ async function initInsights() {
         try {
             btnRefresh.disabled = true;
             btnRefresh.textContent = 'Refreshing...';
-            
+
             // In a full app, we'd pull the actual holdings state here.
             // Sending an empty holdings array triggers the API to use its mock realistic portfolio.
             const data = await apiFetch('/insights', 'POST', { portfolio: [] });
-            
+
             // 1. Portfolio Gauge & Breakdown
             const pt = data.portfolio_rating;
             gaugeScore.textContent = pt;
             gaugeLabel.textContent = data.portfolio_status;
             gaugeCircle.style.strokeDasharray = `${(pt / 100) * 408} 408`;
-            
+
             subscores.innerHTML = Object.entries(data.scores).map(([k, v]) => `
                 <div class="breakdown-row">
                     <span style="text-transform: capitalize;">${k.replace('_', ' ')}</span>
@@ -1290,19 +1410,187 @@ async function initInsights() {
     }
 
     btnRefresh.addEventListener('click', loadData);
-    
+
     // Auto load
     loadData();
 }
+
+// ─────────────────────────────────────────
+//  PAPER TRADING — initPaperTrading()
+// ─────────────────────────────────────────
+
+async function initPaperTrading() {
+    const statusEl      = document.getElementById('pt-status');
+    const cashEl        = document.getElementById('pt-cash');
+    const holdingsValEl = document.getElementById('pt-holdings-val');
+    const totalEl       = document.getElementById('pt-total');
+    const holdingsTable = document.getElementById('pt-holdings-table');
+    const btnBuy        = document.getElementById('btn-buy');
+    const btnSell       = document.getElementById('btn-sell');
+
+    if (!btnBuy) return;
+
+    const fmt    = n  => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n);
+    const fmtPct = n  => (n >= 0 ? '+' : '') + Number(n).toFixed(2) + '%';
+    const pnlColor = n => n >= 0 ? '#00ff88' : '#ff4444';
+
+    // ── refresh portfolio display using /portfolio/performance ────────────────
+    async function refreshPortfolio() {
+        try {
+            const d = await portfolioPerformance();
+
+            // Headline numbers
+            if (cashEl)        cashEl.innerText        = fmt(d.cash || d.cash_balance || 0);
+            if (holdingsValEl) holdingsValEl.innerText = fmt(d.holdings_value || 0);
+            if (totalEl)       totalEl.innerText       = fmt(d.total_value || 0);
+
+            // ── Build performance sub-header (P&L + best/worst + win rate) ──
+            let perfBar = '';
+            if (d.trade_count > 0) {
+                const pnlSign  = (d.overall_pnl || 0) >= 0 ? '+' : '';
+                const pnlClr   = pnlColor(d.overall_pnl || 0);
+
+                const bestHtml = d.best_performer
+                    ? `<span style="color:#00ff88">▲ ${d.best_performer.ticker} ${fmtPct(d.best_performer.pnl_pct)}</span>`
+                    : '—';
+                const worstHtml = d.worst_performer
+                    ? `<span style="color:#ff4444">▼ ${d.worst_performer.ticker} ${fmtPct(d.worst_performer.pnl_pct)}</span>`
+                    : '—';
+                const winHtml = d.win_rate_pct !== null && d.win_rate_pct !== undefined
+                    ? `<span style="color:#ffcc00">Win ${d.win_rate_pct}%</span>`
+                    : '';
+
+                perfBar = `
+                <div style="
+                    display:flex; align-items:center; gap:1.5rem;
+                    font-family:'JetBrains Mono',monospace; font-size:0.72rem;
+                    padding:10px 16px; margin-bottom:12px;
+                    background:rgba(0,0,0,0.3); border-radius:10px;
+                    border:1px solid rgba(255,255,255,0.06);
+                ">
+                    <div>
+                        <div style="color:var(--muted-text);font-size:0.6rem;letter-spacing:.05em;margin-bottom:2px">UNREALIZED P&L</div>
+                        <div style="color:${pnlClr};font-weight:800">${pnlSign}${fmt(d.overall_pnl || 0)}
+                            <span style="font-weight:400;color:${pnlClr};font-size:0.68rem">(${fmtPct(d.overall_pnl_pct || 0)})</span>
+                        </div>
+                    </div>
+                    <div style="width:1px;height:32px;background:rgba(255,255,255,0.08)"></div>
+                    <div style="display:flex;gap:1rem">
+                        <div><div style="color:var(--muted-text);font-size:0.6rem;margin-bottom:2px">BEST</div>${bestHtml}</div>
+                        <div><div style="color:var(--muted-text);font-size:0.6rem;margin-bottom:2px">WORST</div>${worstHtml}</div>
+                        ${winHtml ? `<div><div style="color:var(--muted-text);font-size:0.6rem;margin-bottom:2px">WIN RATE</div>${winHtml}</div>` : ''}
+                    </div>
+                    <div style="margin-left:auto;color:var(--muted-text);font-size:0.62rem">${d.trade_count} trade(s)</div>
+                </div>`;
+            }
+
+            // ── Holdings table ────────────────────────────────────────────────
+            if (holdingsTable) {
+                if (!d.holdings || d.holdings.length === 0) {
+                    holdingsTable.innerHTML = perfBar +
+                        '<div style="color:var(--muted-text);font-size:0.75rem">No holdings yet. Execute your first trade.</div>';
+                } else {
+                    const rows = d.holdings.map(h => `
+                        <div style="
+                            display:grid;
+                            grid-template-columns:80px 60px 95px 95px 95px auto;
+                            gap:6px; padding:8px 0;
+                            border-bottom:1px solid rgba(255,255,255,0.04);
+                            align-items:center; font-size:0.8rem;
+                        ">
+                            <span style="color:#fff;font-weight:700">${h.ticker}</span>
+                            <span style="color:var(--muted-text)">${h.quantity}</span>
+                            <span style="color:var(--muted-text)">${fmt(h.avg_cost)}</span>
+                            <span style="color:var(--neon-lime)">${fmt(h.current_price)}</span>
+                            <span>${fmt(h.market_value)}</span>
+                            <span style="color:${pnlColor(h.pnl)};font-weight:700;text-align:right">
+                                ${fmtPct(h.pnl_pct)}
+                                <span style="font-weight:400;font-size:0.7rem;margin-left:4px">(${fmt(h.pnl)})</span>
+                            </span>
+                        </div>`).join('');
+
+                    holdingsTable.innerHTML = perfBar + `
+                        <div style="
+                            display:grid;
+                            grid-template-columns:80px 60px 95px 95px 95px auto;
+                            gap:6px; color:var(--muted-text);
+                            font-size:0.62rem; text-transform:uppercase; letter-spacing:.05em;
+                            padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.06);
+                            margin-bottom:4px;
+                        ">
+                            <span>Ticker</span><span>Qty</span><span>Avg Cost</span>
+                            <span>Live Price</span><span>Mkt Value</span><span style="text-align:right">P&L</span>
+                        </div>
+                        ${rows}`;
+                }
+            }
+        } catch (e) {
+            if (statusEl) {
+                statusEl.innerText = 'Could not load portfolio. Is the backend running?';
+                statusEl.style.color = '#ff4444';
+            }
+        }
+    }
+
+    // ── Execute trade via the Execution Agent (POST /execute) ─────────────────
+    async function doTrade(action) {
+        const ticker = (document.getElementById('pt-ticker')?.value || '').toUpperCase().trim();
+        const qty    = parseFloat(document.getElementById('pt-qty')?.value || 0);
+
+        if (!ticker || qty <= 0) {
+            statusEl.innerText   = '⚠ Enter a valid ticker and quantity.';
+            statusEl.style.color = '#ffcc00';
+            return;
+        }
+
+        btnBuy.disabled  = true;
+        btnSell.disabled = true;
+        statusEl.style.color = 'var(--muted-text)';
+        statusEl.innerText   = `⏳ Processing ${action} ${qty}× ${ticker}...`;
+
+        try {
+            // Auto-provision portfolio if first visit
+            try { await portfolioInit(); } catch (_) {}
+
+            // Route through the Execution Agent
+            const result = await executeViaAgent({ ticker, action, quantity: qty });
+
+            const clr = action === 'BUY' ? '#00ff88' : '#ff4444';
+            statusEl.style.color = clr;
+            statusEl.innerHTML   =
+                `✓ ${action} ${result.quantity}× <b>${result.ticker}</b> ` +
+                `@ ${fmt(result.price)} — ` +
+                `Total: <b>${fmt(result.total_cost)}</b> ` +
+                `<span style="color:var(--muted-text);font-size:0.7rem">| ID: ${result.trade_id?.slice(0,8)}…</span>`;
+
+            await refreshPortfolio();
+        } catch (e) {
+            statusEl.style.color = '#ff4444';
+            statusEl.innerText   = `✗ ${e.message || 'Trade failed.'}`;
+        } finally {
+            btnBuy.disabled  = false;
+            btnSell.disabled = false;
+        }
+    }
+
+    btnBuy.addEventListener('click',  () => doTrade('BUY'));
+    btnSell.addEventListener('click', () => doTrade('SELL'));
+
+    // Load existing portfolio on page open
+    try { await portfolioInit(); } catch (_) {}
+    await refreshPortfolio();
+}
+
 
 // ─────────────────────────────────────────
 //  INIT ROUTER — detect page by element presence
 // ─────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('run-analysis-btn'))  initDashboard();
-    if (document.getElementById('run-pipeline-btn'))  initPipeline();
-    if (document.getElementById('run-sim-btn'))       initSimulator();
-    if (document.getElementById('btn-validate'))      initGuard();
+    if (document.getElementById('run-analysis-btn')) initDashboard();
+    if (document.getElementById('run-pipeline-btn')) initPipeline();
+    // Start paper trading (simulator logic is handled inline in simulator.html)
+    if (document.getElementById('run-sim-btn')) initPaperTrading();
+    if (document.getElementById('btn-validate')) initGuard();
     if (document.getElementById('refresh-climate-btn')) initInsights();
 });

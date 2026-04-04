@@ -324,20 +324,17 @@
         <section class="glass-card rounded-2xl portfolio-card">
             <div class="portfolio-info">
                 <label class="label">TOTAL PORTFOLIO VALUE</label>
-                <h2>$284,500.73</h2>
-                <div class="badge-green">+14.2% (30D)</div>
+                <h2 id="dash-port-total">$—</h2>
+                <div class="badge-green" id="dash-port-pnl" style="display:none;"></div>
                 <div style="margin-top: 1.5rem">
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
-                        <div style="width:12px; height:12px; border-radius:3px; background:#a8ff3e"></div>
-                        <span style="font-size:0.85rem">Tech 40%</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size:0.75rem; color:var(--muted-text); text-transform:uppercase; letter-spacing:1px;">Cash Balance</span>
+                        <span id="dash-port-cash" style="font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--neon-lime);">$—</span>
                     </div>
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
-                        <div style="width:12px; height:12px; border-radius:3px; background:#00d2ff"></div>
-                        <span style="font-size:0.85rem">Energy 28%</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px">
-                        <div style="width:12px; height:12px; border-radius:3px; background:#ffd200"></div>
-                        <span style="font-size:0.85rem">ESG 32%</span>
+                    <div style="font-size:0.75rem; color:var(--muted-text); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Holdings</div>
+                    <div id="dash-holdings-list" style="max-height: 120px; overflow-y: auto; padding-right: 5px;">
+                        <!-- Holdings will be injected here -->
+                        <div style="font-size: 0.75rem; color:var(--muted-text)">Loading...</div>
                     </div>
                 </div>
             </div>
@@ -419,32 +416,19 @@
             </svg>
         </section>
 
-        <!-- Trade Insights -->
+        <!-- Trade Insights & Execution -->
         <section class="glass-card rounded-2xl sub-card">
-            <h4 class="panel-title" style="margin-bottom:1rem; font-size:0.8rem">Trade Recommendation</h4>
-            <div id="trade-recs-container">
-                <div class="trade-row">
-                    <div>
-                        <div style="font-weight:700">NVDA</div>
-                        <div style="font-size:0.72rem;color:#a8ff3e;font-family:'JetBrains Mono',monospace;margin-top:2px">$875.40<span style="color:var(--muted-text);margin-left:4px">/share</span></div>
-                    </div>
-                    <span class="trade-chip chip-buy">BUY</span>
-                </div>
-                <div class="trade-row">
-                    <div>
-                        <div style="font-weight:700">MSFT</div>
-                        <div style="font-size:0.72rem;color:#a8ff3e;font-family:'JetBrains Mono',monospace;margin-top:2px">$402.11<span style="color:var(--muted-text);margin-left:4px">/share</span></div>
-                    </div>
-                    <span class="trade-chip chip-hold">HOLD</span>
-                </div>
-                <div class="trade-row" style="border-bottom:none">
-                    <div>
-                        <div style="font-weight:700">XOM</div>
-                        <div style="font-size:0.72rem;color:#ff6666;font-family:'JetBrains Mono',monospace;margin-top:2px">$94.11<span style="color:var(--muted-text);margin-left:4px">/share</span></div>
-                    </div>
-                    <span class="trade-chip chip-avoid">AVOID</span>
-                </div>
+            <h4 class="panel-title" style="margin-bottom:1rem; font-size:0.8rem">Quick Execution</h4>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input id="qt-ticker" placeholder="Ticker (e.g. AAPL)" class="neon-input" style="flex:1" />
+                <input id="qt-qty" type="number" placeholder="Qty" value="10" class="neon-input" style="width:70px" />
+                <select id="qt-action" class="neon-input" style="width:90px; padding:0 8px;">
+                    <option value="BUY">BUY</option>
+                    <option value="SELL">SELL</option>
+                </select>
             </div>
+            <button id="execute-trade-btn" class="btn-simulate" style="width:100%; padding:10px; font-size:0.85rem">Execute Trade</button>
+            <div id="qt-result" style="margin-top:12px; font-size:0.8rem; font-family:'JetBrains Mono',monospace; min-height:1.2rem;"></div>
         </section>
 
         <!-- Guard Result -->
