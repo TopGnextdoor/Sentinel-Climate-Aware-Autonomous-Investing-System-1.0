@@ -30,7 +30,7 @@ app.include_router(router)
 
 @app.get("/", include_in_schema=False)
 def read_root():
-    return RedirectResponse(url="/ui/dashboard.html")
+    return RedirectResponse(url="/ui/index.html")
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
