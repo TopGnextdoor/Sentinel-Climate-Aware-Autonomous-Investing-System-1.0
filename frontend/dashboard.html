@@ -195,10 +195,10 @@
     <!-- HERO SECTION: USER PROFILE -->
     <header class="hero" style="text-align: left; display: flex; align-items: center; justify-content: space-between; padding-top: 2rem; padding-bottom: 2rem;">
         <div style="display: flex; align-items: center; gap: 1.5rem;">
-            <div id="hero-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: rgba(168, 255, 62, 0.1); border: 2px solid var(--neon-lime); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; color: var(--neon-lime);">JD</div>
+            <div id="hero-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: rgba(168, 255, 62, 0.1); border: 2px solid var(--neon-lime); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; color: var(--neon-lime);"></div>
             <div>
-                <h1 id="hero-welcome" style="font-size: 2rem; margin: 0; text-transform: none; letter-spacing: 0;">Welcome back, Jane Doe</h1>
-                <p id="hero-account-tier" style="color: var(--muted-text); margin-top: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">Account ID: SNTL-89A4  •  Tier: Institutional Sentinel</p>
+                <h1 id="hero-welcome" style="font-size: 2rem; margin: 0; text-transform: none; letter-spacing: 0;">Welcome back...</h1>
+                <p id="hero-account-tier" style="color: var(--muted-text); margin-top: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">Loading identity...</p>
                 <div class="underline" style="margin: 10px 0 0 0; width: 60px; height: 3px;"></div>
             </div>
         </div>
@@ -604,7 +604,7 @@
         try {
             // Attempt to fetch REAL data from Sentinel backend
             const token = localStorage.getItem("token");
-            const res = await fetch(`http://127.0.0.1:8000/market-data/${ticker}?period=${req.p}&interval=${req.i}`, {
+            const res = await fetch(`${BASE_URL}/market-data/${ticker}?period=${req.p}&interval=${req.i}`, {
                 headers: token ? { "Authorization": "Bearer " + token } : {}
             });
             if (res.ok) {
@@ -780,5 +780,7 @@
         initChart();
     }
     </script>
+    <script src="script.js"></script>
+    <script>loadIdentity();</script>
 </body>
 </html>
