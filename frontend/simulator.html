@@ -274,6 +274,15 @@
             const durationSlider = document.querySelector('#sim-duration-slider');
             const durationText = document.querySelector('#duration-text');
 
+            // Risk Appetite Selection
+            const pillBtns = document.querySelectorAll('.pill-group .pill-btn');
+            pillBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    pillBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+
             amountSlider.addEventListener('input', (e) => {
                 amountDisplay.innerText = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(e.target.value);
             });
