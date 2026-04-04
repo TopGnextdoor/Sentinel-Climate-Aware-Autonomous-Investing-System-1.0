@@ -1,22 +1,20 @@
-from passlib.context import CryptContext
-
-# Define the password hashing context to use bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def hash_password(password: str) -> str:
-    """Securely hash a password using bcrypt."""
-    # Truncate to 72 chars to prevent Bcrypt 72-byte limit crashes
-    safe_pwd = password[:72]
-    return pwd_context.hash(safe_pwd)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against its hashed version."""
-    safe_pwd = plain_password[:72]
-    return pwd_context.verify(safe_pwd, hashed_password)
-
+import bcrypt
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from typing import Optional
+
+def hash_password(password: str) -> str:
+    """Securely hash a password using native bcrypt."""
+    # Ensure byte limits are respected natively
+    pwd_bytes = password.encode('utf-8')[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a plain password against its hashed version natively."""
+    pwd_bytes = plain_password.encode('utf-8')[:72]
+    hash_bytes = hashed_password.encode('utf-8')
+    return bcrypt.checkpw(pwd_bytes, hash_bytes)
 
 # Constant values MVP
 SECRET_KEY = "sentinel_mvp_ultra_secret_key"
